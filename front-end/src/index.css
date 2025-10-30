@@ -1,0 +1,46 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+/* обычный css (работает всегда) */
+.custom-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    column-gap: 8px;
+    min-width: 80px;
+  }
+  
+  /* стандартные буллеты Swiper внутри .custom-pagination */
+  .custom-pagination .swiper-pagination-bullet {
+    width: 10px;
+    height: 10px;
+    border-radius: 9999px;
+    background: #cbd5e1; /* slate-300 */
+    opacity: 0.9;
+    margin: 0 4px;
+    transition: transform 150ms ease, background 150ms ease;
+  }
+  
+  .custom-pagination .swiper-pagination-bullet-active {
+    background: #0f172a; /* slate-900 */
+    transform: scale(1.15);
+    opacity: 1;
+  }
+  
+  /* небольшая тень для кнопок и hover */
+  button[aria-label="Previous slide"],
+  button[aria-label="Next slide"] {
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+  }
+  
+  /* если используешь Tailwind с @apply, можно так (внутри index.css @layer components):
+  .custom-pagination .swiper-pagination-bullet {
+    @apply w-2.5 h-2.5 rounded-full bg-slate-300 opacity-90 mx-1 transition-transform;
+  }
+  .custom-pagination .swiper-pagination-bullet-active {
+    @apply bg-slate-900 scale-105;
+  }
+  */
+  
