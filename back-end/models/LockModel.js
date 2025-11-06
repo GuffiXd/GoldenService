@@ -1,5 +1,7 @@
+// back-end/models/Lock.js
 const { DataTypes } = require("sequelize");
 const sequelize = require("../config/db");
+const Category = require("./CategoryModel");
 
 const Lock = sequelize.define(
   "Lock",
@@ -13,41 +15,44 @@ const Lock = sequelize.define(
     name: {
       type: DataTypes.STRING(255),
       allowNull: false,
-      validate: {
-        notEmpty: true,
-      },
+      validate: { notEmpty: true },
     },
     price: {
       type: DataTypes.DECIMAL(10, 2),
       allowNull: false,
-      validate: {
-        isDecimal: true,
-        min: 0,
-      },
+      validate: { min: 0 },
     },
     price_with_discount: {
       type: DataTypes.DECIMAL(10, 2),
-      allowNull: true, // ← ДОПУСКАЕМ NULL (если нет скидки)
-      validate: {
-        isDecimal: true,
-        min: 0,
-      },
+      allowNull: true,
+      validate: { min: 0 },
     },
     description: {
-      type: DataTypes.TEXT, // ← TEXT, а не STRING (для длинных описаний)
-      allowNull: true,     // ← можно без описания
+      type: DataTypes.TEXT,
+      allowNull: true,
     },
     image_path: {
       type: DataTypes.STRING(512),
       allowNull: false,
-      validate: {
-        notEmpty: true,
-      },
+      validate: { notEmpty: true },
     },
     is_featured: {
       type: DataTypes.BOOLEAN,
       allowNull: false,
-      defaultValue: false, // ← по умолчанию НЕ в слайдере
+      defaultValue: false,
+    },
+    is_popular: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+    },
+    categoryId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: Category,
+        key: "id",
+      },
     },
   },
   {
@@ -55,9 +60,15 @@ const Lock = sequelize.define(
     timestamps: true,
     indexes: [
       { fields: ["is_featured"] },
+      { fields: ["is_popular"] },
+      { fields: ["categoryId"] },
       { fields: ["price"] },
     ],
   }
 );
+
+// Связи
+Lock.belongsTo(Category, { foreignKey: "categoryId" });
+Category.hasMany(Lock, { foreignKey: "categoryId" });
 
 module.exports = Lock;

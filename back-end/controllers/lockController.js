@@ -2,8 +2,9 @@
 const Lock = require('../models/LockModel');
 const { Op } = require('sequelize');
 
-// Объект с методами
+// ВСЁ В ОДНОМ ОБЪЕКТЕ — ЧИСТО И ПРАВИЛЬНО
 const lockController = {
+  // Все замки
   getAllLocks: async (req, res) => {
     try {
       const locks = await Lock.findAll();
@@ -13,7 +14,7 @@ const lockController = {
     }
   },
 
-  // ДОБАВЛЯЕМ В ОБЪЕКТ, а не через exports
+  // Слайдер (избранные + со скидкой)
   getSliderLocks: async (req, res) => {
     try {
       const slider = await Lock.findAll({
@@ -28,7 +29,22 @@ const lockController = {
     } catch (err) {
       res.status(500).json({ error: err.message });
     }
+  },
+
+  // Популярные
+  getPopularLocks: async (req, res) => {
+    try {
+      const popularLocks = await Lock.findAll({
+        where: { is_popular: true },
+        limit: 8,
+        order: [["createdAt", "DESC"]],
+      });
+      res.json(popularLocks);
+    } catch (error) {
+      console.error("Ошибка при получении популярных замков:", error);
+      res.status(500).json({ error: "Ошибка сервера" });
+    }
   }
 };
 
-module.exports = lockController; // ← экспортируем весь объект
+module.exports = lockController; // ← ТОЛЬКО ЭТО!

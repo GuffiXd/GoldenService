@@ -5,6 +5,7 @@ const lockController = require('../controllers/lockController');
 
 // Роуты
 router.get('/', lockController.getAllLocks);
-router.get('/slider', lockController.getSliderLocks); // ← ДОБАВЬ ЭТОТ РОУТ
+router.get('/slider', lockController.getSliderLocks);
+router.get('/popular', lockController.getPopularLocks); // ← ЗАПЯТАЯ!
 
 module.exports = router;

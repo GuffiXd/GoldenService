@@ -96,18 +96,7 @@ function Slider() {
         ))}
       </Swiper>
 
-      {/* <div className="flex items-center justify-center gap-20 mt-6">
-        <button ref={prevRef} className="hover:text-gray-600 transition " aria-label="Previous">
-          <FontAwesomeIcon icon={faChevronLeft} size="lg" />
-        </button>
-        <div className="swiper-pagination"></div>
-        <button ref={nextRef} className="hover:text-gray-600 transition" aria-label="Next">
-          <FontAwesomeIcon icon={faChevronRight} size="lg" />
-        </button>
-      </div> */}
-
       <div className="flex items-center justify-center mt-6 mb-6 space-x-4">
-        {/* Левая стрелка */}
         <button
           ref={prevRef}
           className="flex items-center justify-center w-6 h-6 hover:text-gray-600 transition-all duration-200"
@@ -116,12 +105,10 @@ function Slider() {
           <FontAwesomeIcon icon={faChevronLeft} size="xl" />
         </button>
 
-        {/* Пагинация */}
         <div className="flex items-center justify-center">
           <div className="swiper-pagination !static" />
         </div>
 
-        {/* Правая стрелка */}
         <button
           ref={nextRef}
           className="flex items-center justify-center w-6 h-6 hover:text-gray-600 transition-all duration-200"
