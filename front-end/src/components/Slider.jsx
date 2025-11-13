@@ -1,3 +1,4 @@
+// src/components/Slider.jsx
 import React, { useRef, useEffect, useState } from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
@@ -68,13 +69,16 @@ function Slider() {
             key={lock.id}
             className="flex flex-col md:flex-row items-center justify-between p-4 bg-white"
           >
-            <div className="md:w-1/2">
+            {/* ФИКСИРОВАННЫЙ РАЗМЕР КАРТИНКИ */}
+            <div className="md:w-1/2 h-80 md:h-full flex items-center justify-center">
               <img
                 src={`${API_URL}${lock.image_path}`}
                 alt={lock.name}
-                className="w-full object-cover rounded-2xl h-full"
+                className="max-h-full max-w-full object-contain rounded-2xl"
+                loading="lazy"
               />
             </div>
+
             <div className="md:w-1/2 p-6">
               <h1 className="text-[44px] font-bold mb-4">{lock.name}</h1>
               <p className="text-lg mb-2">

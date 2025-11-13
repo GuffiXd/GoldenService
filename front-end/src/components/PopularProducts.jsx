@@ -1,3 +1,4 @@
+// src/components/PopularProducts.jsx
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 
@@ -7,7 +8,6 @@ function PopularProducts() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Загружаем популярные замки
   useEffect(() => {
     fetch(`${API_URL}/api/locks/popular`)
       .then((res) => {
@@ -40,104 +40,79 @@ function PopularProducts() {
     );
   }
 
-  // Локальные функции (временно, потом — на бэкенд)
-  const toggleFavorite = (id) => {
-    setProducts((prev) =>
-      prev.map((p) =>
-        p.id === id ? { ...p, is_favorite: !p.is_favorite } : p
-      )
-    );
-  };
-
-  const toggleCart = (id) => {
-    setProducts((prev) =>
-      prev.map((p) =>
-        p.id === id ? { ...p, is_in_cart: !p.is_in_cart } : p
-      )
-    );
-  };
-
   return (
-    <section className="py-16 bg-gray-50">
+    <section className="py-12 bg-white">
       <div className="max-w-[1440px] mx-auto px-6">
-        {/* Заголовок + стрелки */}
-        <div className="flex justify-between items-center mb-12">
-          <h2 className="text-3xl font-bold text-gray-900">
-            Наши популярные продукты
-          </h2>
-          <div className="flex gap-3">
-            <button
-              className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-100 transition"
-              aria-label="Предыдущий"
-            >
-              ←
-            </button>
-            <button
-              className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-100 transition"
-              aria-label="Следующий"
-            >
-              →
-            </button>
-          </div>
-        </div>
+        {/* Заголовок */}
+        <h2 className="text-3xl font-bold text-gray-900 mb-10">
+          Наши популярные продукты
+        </h2>
 
         {/* Сетка товаров */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {products.map((product) => (
             <div
               key={product.id}
-              className="bg-white rounded-lg shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden group"
+              className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden hover:shadow-md transition"
             >
-              {/* Фото */}
-              <div className="relative h-64 bg-gray-50 p-4">
+              {/* Верхняя часть с изображением */}
+              <div className="relative bg-white h-64 flex items-center justify-center p-4">
                 <img
                   src={`${API_URL}${product.image_path}`}
                   alt={product.name}
-                  className="w-full h-full object-contain transition-transform group-hover:scale-105"
+                  className="max-h-full max-w-full object-contain"
                   loading="lazy"
                 />
 
-                {/* Иконка избранного */}
-                <button
-                  onClick={(e) => {
-                    e.preventDefault();
-                    toggleFavorite(product.id);
-                  }}
-                  className="absolute top-3 right-3 p-2 rounded-full bg-white/90 shadow-md hover:bg-white transition"
-                  aria-label="Добавить в избранное"
-                >
-                  <svg
-                    className={`w-5 h-5 transition-colors ${
-                      product.is_favorite
-                        ? "text-red-500 fill-red-500"
-                        : "text-gray-400"
+                {/* В НАЛИЧИИ — СЛЕВА СВЕРХУ */}
+                <div className="absolute top-3 left-3 flex items-center gap-1 text-xs">
+                  <span
+                    className={`w-3 h-3 rounded-full ${
+                      product.in_stock ? "bg-green-500" : "bg-red-500"
                     }`}
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
+                  />
+                  <span
+                    className={`font-medium ${
+                      product.in_stock ? "text-green-600" : "text-red-600"
+                    }`}
                   >
-                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
-                  </svg>
-                </button>
-
-                {/* SALE */}
-                {product.price_with_discount && (
-                  <span className="absolute top-3 left-3 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">
-                    SALE
+                    {product.in_stock ? "В наличии" : "Нет в наличии"}
                   </span>
+                </div>
+
+                {/* SALE — СПРАВА СВЕРХУ */}
+                <div className="absolute top-3 right-3">
+                  {product.price_with_discount && (
+                    <span className="text-black border text-xs font-bold px-2 py-1 rounded">
+                      SALE
+                    </span>
+                  )}
+                </div>
+
+                {/* ПОДАРОК — ПОД "В НАЛИЧИИ" */}
+                {product.is_gift && (
+                  <div className="absolute top-11 left-3 flex items-center gap-1 bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs">
+                    <svg
+                      className="w-3 h-3"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path d="M5 5a2 2 0 012-2h6a2 2 0 012 2v1H5V5z" />
+                      <path d="M5 7h10v8a2 2 0 01-2 2H7a2 2 0 01-2-2V7z" />
+                    </svg>
+                    Подарок
+                  </div>
                 )}
               </div>
 
-              {/* Контент */}
-              <div className="p-5">
-                <h3 className="text-lg font-medium text-gray-900 line-clamp-2 mb-3">
+              {/* Название и цена */}
+              <div className="p-4">
+                <h3 className="text-sm font-medium text-gray-900 line-clamp-2 mb-2">
                   {product.name}
                 </h3>
 
-                {/* Цена */}
-                <div className="flex items-center gap-2 mb-4">
-                  <span className="text-2xl font-bold text-gray-900">
+                <div className="flex items-center gap-2">
+                  <span className="text-lg font-bold text-gray-900">
                     {Number(product.price).toLocaleString("ru-RU")} ₽
                   </span>
                   {product.price_with_discount && (
@@ -146,45 +121,6 @@ function PopularProducts() {
                     </span>
                   )}
                 </div>
-
-                {/* Кнопки */}
-                <div className="flex gap-2 mb-4">
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      toggleFavorite(product.id);
-                    }}
-                    className={`flex-1 py-2 px-3 rounded text-xs font-medium transition ${
-                      product.is_favorite
-                        ? "bg-red-100 text-red-600"
-                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                    }`}
-                  >
-                    {product.is_favorite ? "В избранном" : "В избранное"}
-                  </button>
-
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      toggleCart(product.id);
-                    }}
-                    className={`flex-1 py-2 px-3 rounded text-xs font-medium transition ${
-                      product.is_in_cart
-                        ? "bg-blue-100 text-blue-600"
-                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                    }`}
-                  >
-                    {product.is_in_cart ? "В корзине" : "В корзину"}
-                  </button>
-                </div>
-
-                {/* Подробнее */}
-                <Link
-                  to={`/product/${product.id}`}
-                  className="block w-full text-center bg-blue-600 text-white py-3 rounded-md font-medium hover:bg-blue-700 transition"
-                >
-                  Подробнее
-                </Link>
               </div>
             </div>
           ))}

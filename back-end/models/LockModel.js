@@ -1,4 +1,4 @@
-// back-end/models/Lock.js
+// back-end/models/LockModel.js
 const { DataTypes } = require("sequelize");
 const sequelize = require("../config/db");
 const Category = require("./CategoryModel");
@@ -46,6 +46,11 @@ const Lock = sequelize.define(
       allowNull: false,
       defaultValue: false,
     },
+    in_stock: {  // НОВОЕ ПОЛЕ
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: true,
+    },
     categoryId: {
       type: DataTypes.INTEGER,
       allowNull: false,
@@ -61,6 +66,7 @@ const Lock = sequelize.define(
     indexes: [
       { fields: ["is_featured"] },
       { fields: ["is_popular"] },
+      { fields: ["in_stock"] },    // индекс для быстрого поиска
       { fields: ["categoryId"] },
       { fields: ["price"] },
     ],

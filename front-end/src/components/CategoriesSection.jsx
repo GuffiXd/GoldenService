@@ -19,16 +19,10 @@ export default function CategoriesSection() {
   return (
     <section className="py-16 bg-white">
       <div className="max-w-[1440px] mx-auto px-6">
-        {/* Хлебные крошки */}
-        <nav className="text-sm text-gray-500 mb-4">
-          <Link to="/" className="hover:underline">Главная</Link> /{" "}
-          <span className="text-gray-900">Каталог</span>
-        </nav>
-
         {/* Заголовок */}
-        <h1 className="text-4xl font-bold text-center text-gray-900 mb-12">
+        <h2 className="text-4xl font-bold text-center mb-12 text-gray-900">
           Категории
-        </h1>
+        </h2>
 
         {/* Сетка */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -36,20 +30,21 @@ export default function CategoriesSection() {
             <Link
               key={cat.slug}
               to={`/catalog/${cat.slug}`}
-              className="group block bg-gray-50 rounded-lg overflow-hidden hover:shadow-lg transition-shadow duration-300"
+              className="group block bg-gray-50 rounded-xl overflow-hidden hover:shadow-lg transition-all duration-300"
             >
-              {/* КАРТИНКА — НА ВЕСЬ БЛОК */}
-              <div className="relative h-80 w-full">
+              {/* ФИКСИРОВАННАЯ ВЫСОТА + ЦЕНТР */}
+              <div className="h-64 bg-white flex items-center justify-center p-8">
                 <img
                   src={`${API_URL}/images/products/${cat.img}`}
                   alt={cat.name}
-                  className="absolute inset-0 w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300"
+                  className="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300"
+                  loading="lazy"
                 />
               </div>
 
-              {/* ПОДПИСЬ */}
-              <div className="p-4 text-center">
-                <p className="text-sm font-medium text-gray-900 line-clamp-2">
+              {/* Подпись */}
+              <div className="p-4 text-center border-t border-gray-200">
+                <p className="text-sm font-medium text-gray-700 line-clamp-2">
                   {cat.name}
                 </p>
               </div>

@@ -1,85 +1,63 @@
+// src/components/CategoriesSection.jsx
 import React from "react";
 import { Link } from "react-router-dom";
 
 const API_URL = "http://localhost:5000";
 
-function Categories() {
-  const categories = [
-    {
-      title: "Для отелей",
-      img: "/images/hotel.jpg",
-      link: "/catalog/hotels",
-    },
-    {
-      title: "Для шкафчиков",
-      img: "/images/cabinet-lock.jpg",
-      link: "/catalog/cabinets",
-    },
-    {
-      title: "Для офисов",
-      img: "/images/office-lock.jpg",
-      link: "/catalog/offices",
-    },
-    {
-      title: "Замки для дома",
-      img: "/images/home-lock.jpg",
-      link: "/catalog/home",
-    },
-  ];
+const categories = [
+  { name: "Накладные электронные замки", slug: "overlay", img: "flat-lock.webp" },
+  { name: "Врезные электронные замки", slug: "mortise", img: "mortise-lock.webp" },
+  { name: "Замки для квартиры", slug: "apartment", img: "home-lock.webp" },
+  { name: "Замки для дома", slug: "home", img: "rooms-lock.webp" },
+];
 
+export default function CategoriesSection() {
   return (
     <section className="py-16 bg-white">
-      <div className="max-w-[1200px] mx-auto px-6">
+      <div className="max-w-[1440px] mx-auto px-6">
         {/* Заголовок */}
-        <h2 className="text-center text-3xl md:text-4xl font-semibold text-gray-900 mb-14">
+        <h2 className="text-4xl font-bold text-center mb-12 text-gray-900">
           Категории
         </h2>
 
-        {/* Сетка категорий */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
-          {categories.map((cat, index) => (
-            <div
-              key={index}
-              className="relative h-80 rounded-lg overflow-hidden group cursor-pointer"
-              style={{
-                backgroundImage: `url(${API_URL}${cat.img})`,
-                backgroundSize: "contain",
-                backgroundPosition: "center",
-                backgroundRepeat: "no-repeat",
-                backgroundColor: "#f9fafb",
-              }}
+        {/* Сетка */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+          {categories.map((cat) => (
+            <Link
+              key={cat.slug}
+              to={`/catalog/${cat.slug}`}
+              className="group block bg-gray-50 rounded-xl overflow-hidden hover:shadow-lg transition-all duration-300 border border-gray-200"
             >
-              {/* Полупрозрачный оверлей */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-
-              {/* Контент */}
-              <div className="absolute bottom-0 left-0 right-0 p-6 text-center transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
-                <h3 className="text-xl font-semibold text-white mb-3 drop-shadow-md">
-                  {cat.title}
-                </h3>
-                <Link
-                  to={cat.link}
-                  className="inline-block border border-white text-white px-6 py-2 rounded-sm text-sm font-medium hover:bg-white hover:text-gray-800 transition-all duration-300"
-                >
-                  Перейти
-                </Link>
+              {/* ФИКСИРОВАННАЯ ВЫСОТА + ЦЕНТР */}
+              <div className="h-64 bg-white flex items-center justify-center p-8">
+                <img
+                  src={`${API_URL}/images/products/${cat.img}`}
+                  alt={cat.name}
+                  className="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300"
+                  loading="lazy"
+                />
               </div>
-            </div>
+
+              {/* Подпись */}
+              <div className="p-4 text-center border-t border-gray-200">
+                <p className="text-sm font-medium text-gray-700 line-clamp-2">
+                  {cat.name}
+                </p>
+              </div>
+            </Link>
           ))}
         </div>
 
-        {/* Кнопка "Все категории" */}
-        <div className="flex justify-center mt-14">
+        {/* Кнопка */}
+        <div className="mt-12 text-center">
           <Link
             to="/catalog"
-            className="bg-[#4295E4] text-white px-10 py-3 rounded-sm font-medium hover:bg-blue-700 transition-colors"
+            className="inline-block px-8 py-3 bg-[#4295E4] text-white font-medium rounded-md hover:bg-[#2f7acc] transition"
           >
-            Все категории
+            Смотреть все
           </Link>
         </div>
       </div>
     </section>
   );
 }
-
-export default Categories;

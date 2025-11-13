@@ -30,7 +30,7 @@ function Footer() {
       </div>
 
       {/* Нижняя часть — контакты */}
-      <div className="max-w-[1440px] mx-auto px-6 py-12">
+      <div className="max-w-[1440px] mx-auto px-6 py-12 bg-[#0F172A]">
         <div className="flex flex-wrap justify-between items-start gap-8">
           {/* Логотип */}
           <div>
@@ -45,10 +45,10 @@ function Footer() {
           <div>
             <h3 className="font-semibold text-lg mb-4">Навигация</h3>
             <ul className="space-y-2 text-gray-400">
-              <li><a href="#" className="hover:text-blue-400 transition">Главная</a></li>
-              <li><a href="#" className="hover:text-blue-400 transition">Каталог</a></li>
-              <li><a href="#" className="hover:text-blue-400 transition">Оптовая продажа</a></li>
-              <li><a href="#" className="hover:text-blue-400 transition">О нас</a></li>
+              <li><a href="#" className="hover:text-[#2f7acc] transition">Главная</a></li>
+              <li><a href="#" className="hover:text-[#2f7acc] transition">Каталог</a></li>
+              <li><a href="#" className="hover:text-[#2f7acc] transition">Оптовая продажа</a></li>
+              <li><a href="#" className="hover:text-[#2f7acc] transition">О нас</a></li>
             </ul>
           </div>
 
