@@ -1,12 +1,13 @@
 // src/components/PopularProducts.jsx
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 const API_URL = "http://localhost:5000";
 
 function PopularProducts() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate(); // ← ДЛЯ ПРОГРАММНОГО ПЕРЕХОДА
 
   useEffect(() => {
     fetch(`${API_URL}/api/locks/popular`)
@@ -53,7 +54,8 @@ function PopularProducts() {
           {products.map((product) => (
             <div
               key={product.id}
-              className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden hover:shadow-md transition"
+              className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden hover:shadow-md transition cursor-pointer"
+              onClick={() => navigate(`/product/${product.id}`)} // ← КЛИК ПО ВСЕЙ КАРТОЧКЕ
             >
               {/* Верхняя часть с изображением */}
               <div className="relative bg-white h-64 flex items-center justify-center p-4">
@@ -83,26 +85,11 @@ function PopularProducts() {
                 {/* SALE — СПРАВА СВЕРХУ */}
                 <div className="absolute top-3 right-3">
                   {product.price_with_discount && (
-                    <span className="text-black border text-xs font-bold px-2 py-1 rounded">
+                    <span className="text-black border text-xs font-bold px-2 py-1 rounded bg-gray-200">
                       SALE
                     </span>
                   )}
                 </div>
-
-                {/* ПОДАРОК — ПОД "В НАЛИЧИИ" */}
-                {product.is_gift && (
-                  <div className="absolute top-11 left-3 flex items-center gap-1 bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs">
-                    <svg
-                      className="w-3 h-3"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
-                      <path d="M5 5a2 2 0 012-2h6a2 2 0 012 2v1H5V5z" />
-                      <path d="M5 7h10v8a2 2 0 01-2 2H7a2 2 0 01-2-2V7z" />
-                    </svg>
-                    Подарок
-                  </div>
-                )}
               </div>
 
               {/* Название и цена */}
@@ -117,7 +104,10 @@ function PopularProducts() {
                   </span>
                   {product.price_with_discount && (
                     <span className="text-sm text-gray-500 line-through">
-                      {Number(product.price_with_discount).toLocaleString("ru-RU")} ₽
+                      {Number(product.price_with_discount).toLocaleString(
+                        "ru-RU"
+                      )}{" "}
+                      ₽
                     </span>
                   )}
                 </div>

@@ -15,6 +15,9 @@ const seedDatabase = require("./seedDatabase");
 const lockRoutes = require("./routes/LockRoutes");
 const statisticsRoutes = require("./routes/StatisticsRoutes");
 const categoryRoutes = require("./routes/CategoryRoutes");
+const callbackRoutes = require("./routes/CallbackRoutes");
+const wholesaleRoutes = require("./routes/WholesaleRoutes")
+const projectRoutes = require("./routes/ProjectRoutes");
 
 dotenv.config();
 
@@ -37,6 +40,9 @@ app.use("/images", express.static(path.join(__dirname, "images")));
 app.use("/api/locks", lockRoutes);
 app.use("/api/statistics", statisticsRoutes);
 app.use("/api/categories", categoryRoutes);
+app.use("/api/form", callbackRoutes);
+app.use("/api/orders", wholesaleRoutes);
+app.use("/api/projects", projectRoutes);
 
 // Главная
 app.get("/", (req, res) => {

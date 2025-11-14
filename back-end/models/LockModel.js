@@ -46,7 +46,8 @@ const Lock = sequelize.define(
       allowNull: false,
       defaultValue: false,
     },
-    in_stock: {  // НОВОЕ ПОЛЕ
+    in_stock: {
+      // НОВОЕ ПОЛЕ
       type: DataTypes.BOOLEAN,
       allowNull: false,
       defaultValue: true,
@@ -59,6 +60,11 @@ const Lock = sequelize.define(
         key: "id",
       },
     },
+    article: {
+      type: DataTypes.STRING(100),
+      allowNull: true,
+      unique: true,
+    },
   },
   {
     tableName: "locks",
@@ -66,7 +72,7 @@ const Lock = sequelize.define(
     indexes: [
       { fields: ["is_featured"] },
       { fields: ["is_popular"] },
-      { fields: ["in_stock"] },    // индекс для быстрого поиска
+      { fields: ["in_stock"] }, // индекс для быстрого поиска
       { fields: ["categoryId"] },
       { fields: ["price"] },
     ],
