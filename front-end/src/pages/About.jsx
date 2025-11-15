@@ -1,10 +1,10 @@
 import React from "react";
-import Header from "../components/Header";
-import Promocode from "../components/Promocode";
-import AboutSection from "../components/AboutSection";
-import Statistics from "../components/Statistics";
-import MissionSection from "../components/MissionSection";
-import AboutFooter from "../components/FooterAbout";
+import Header from "../components/layout/Header";
+import Promocode from "../components/layout/Promocode";
+import AboutSection from "../components/sections/AboutSection";
+import Statistics from "../components/layout/Statistics";
+import MissionSection from "../components/sections/MissionSection";
+import AboutFooter from "../components/layout/FooterAbout";
 
 function About() {
   return (

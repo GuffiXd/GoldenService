@@ -1,6 +1,6 @@
-import Header from "../components/Header";
-import Footer from "../components/Footer";
-import Promocode from "../components/Promocode";
+import Header from "../components/layout/Header";
+import Footer from "../components/layout/Footer";
+import Promocode from "../components/layout/Promocode";
 
 function Product() {
   return (

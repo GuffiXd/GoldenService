@@ -1,13 +1,15 @@
 // src/pages/Main.jsx
 import React from 'react';
-import Header from '../components/Header';
-import PromoBanner from '../components/PromoBanner';
-import Promocode from '../components/Promocode';
-import Footer from '../components/Footer';
-import WhyUs from "../components/WhyUs"
-import Statistics from '../components/Statistics';
-import CategoriesSection from '../components/CategoriesSection';
+import Header from '../components/layout/Header';
+import PromoBanner from '../components/sections/PromoBanner';
+import Promocode from '../components/layout/Promocode';
+import Footer from '../components/layout/Footer';
+import WhyUsSection from "../components/sections/WhyUsSection"
+import Statistics from '../components/layout/Statistics';
+import CategoriesSection from '../components/sections/CategoriesSection';
 import PopularProducts from '../components/PopularProducts';
+import WholesalePromoSection from '../components/sections/WholesalePromoSection';
+import AboutPromoSection from '../components/sections/AboutPromoSection';
 
 function Main() {
   return (
@@ -16,8 +18,10 @@ function Main() {
       <Header />
       <PromoBanner />
       <Statistics />
-      <WhyUs />
+      <WhyUsSection />
       <CategoriesSection />
+      <WholesalePromoSection />
+      <AboutPromoSection />
       <PopularProducts />
       <Footer />
     </div>
