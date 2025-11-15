@@ -1,149 +1,203 @@
-// src/components/Header.jsx
-import React, { useState, useEffect } from "react";
-import { NavLink } from "react-router-dom";
+import React, { useState, useEffect, useRef } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faSearch,
+  faShoppingCart,
+  faUser,
+  faBars,
+  faTimes,
+} from "@fortawesome/free-solid-svg-icons";
+import { debounce } from "lodash";
 
 const API_URL = "http://localhost:5000";
 
 function Header() {
-  const [categories, setCategories] = useState([]);
-  const [isCatalogOpen, setIsCatalogOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [showResults, setShowResults] = useState(false);
+  const searchRef = useRef(null);
+  const navigate = useNavigate();
 
-  // Загружаем категории с бэкенда
+  // Создаём debounced функцию через useRef — один раз
+  const debouncedSearchRef = useRef(
+    debounce(async (query) => {
+      if (!query || query.trim().length < 2) {
+        setSearchResults([]);
+        return;
+      }
+
+      try {
+        const res = await fetch(
+          `${API_URL}/api/locks/search?q=${encodeURIComponent(query.trim())}`
+        );
+        if (res.ok) {
+          const data = await res.json();
+          setSearchResults(data.slice(0, 5));
+        } else {
+          setSearchResults([]);
+        }
+      } catch (err) {
+        console.error("Ошибка поиска:", err);
+        setSearchResults([]);
+      }
+    }, 300)
+  );
+
+  // Запуск поиска
   useEffect(() => {
-    fetch(`${API_URL}/api/categories`)
-      .then((res) => {
-        if (!res.ok) throw new Error("Ошибка загрузки категорий");
-        return res.json();
-      })
-      .then((data) => setCategories(data))
-      .catch((err) => console.error(err));
+    debouncedSearchRef.current(searchQuery);
+  }, [searchQuery]);
+
+  // Очистка при размонтировании
+  useEffect(() => {
+    const currentDebounce = debouncedSearchRef.current;
+    return () => {
+      currentDebounce.cancel();
+    };
   }, []);
 
+  // Закрытие при клике вне
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (searchRef.current && !searchRef.current.contains(event.target)) {
+        setShowResults(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleResultClick = (lock) => {
+    setSearchQuery("");
+    setShowResults(false);
+    setSearchResults([]);
+    navigate(`/product/${lock.id}`);
+  };
+
+  const handleInputChange = (e) => {
+    const value = e.target.value;
+    setSearchQuery(value);
+    if (value.length >= 2) setShowResults(true);
+  };
+
   return (
-    <header className="flex justify-around items-center p-4 border pl-20 pr-20 text-xl bg-white shadow-sm">
-      {/* Логотип */}
-      <div className="logo">
-        <img
-          src={`${API_URL}/images/icons/logo-header.svg`}
-          alt="Golden Soft"
-          className="h-10"
-        />
-      </div>
+    <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-xl shadow-lg border-b border-gray-100">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-20">
+          {/* === ЛОГО === */}
+          <Link to="/" className="flex items-center space-x-2 group">
+            <div className="w-10 h-10 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-xl flex items-center justify-center shadow-md group-hover:scale-110 transition-transform">
+              <span className="text-white font-black text-lg">G</span>
+            </div>
+            <span className="text-2xl font-black text-gray-900">GoldenSoft</span>
+          </Link>
 
-      {/* Навигация */}
-      <nav className="relative">
-        <ul className="flex space-x-10">
-          {/* Главная */}
-          <li>
-            <NavLink
-              to="/main"
-              className="hover:underline transition"
-            >
-              Главная
-            </NavLink>
-          </li>
+          {/* === ПОИСК (десктоп) === */}
+          <div className="hidden md:block flex-1 max-w-xl mx-8" ref={searchRef}>
+            <div className="relative">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={handleInputChange}
+                onFocus={() => searchResults.length > 0 && setShowResults(true)}
+                placeholder="Поиск замков..."
+                className="w-full px-5 py-3 pl-12 bg-gray-50 border border-gray-200 rounded-full text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+              />
+              <FontAwesomeIcon
+                icon={faSearch}
+                className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+              />
 
-          {/* КАТАЛОГ С ВЫПАДАЮЩИМ МЕНЮ */}
-          <li
-            className="relative"
-            onMouseEnter={() => setIsCatalogOpen(true)}
-            onMouseLeave={() => setIsCatalogOpen(false)}
-          >
-            <NavLink
-              to="/catalog"
-              className="hover:underline transition flex items-center gap-1"
-
-            >
-              Каталог
-              <svg
-                className={`w-4 h-4 transition-transform duration-200 ${
-                  isCatalogOpen ? "rotate-180" : ""
-                }`}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M19 9l-7 7-7-7"
-                />
-              </svg>
-            </NavLink>
-
-            {/* ВЫПАДАЮЩЕЕ МЕНЮ */}
-            {isCatalogOpen && (
-              <div
-                className="absolute top-full left-0 w-80 bg-white rounded-lg shadow-xl border border-gray-200 z-50"
-                onMouseEnter={() => setIsCatalogOpen(true)}
-                onMouseLeave={() => setIsCatalogOpen(false)}
-              >
-                <ul className="py-3">
-                  {categories.map((cat) => (
-                    <li key={cat.slug}>
-                      <NavLink
-                        to={`/catalog/${cat.slug}`}
-                        className="block px-5 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:underlin hover:font-semibold transition"
-                        onClick={() => setIsCatalogOpen(false)}
-                      >
-                        {cat.name}
-                      </NavLink>
-                    </li>
-                  ))}
-
-                  {/* КНОПКА "СМОТРЕТЬ ВСЕ" */}
-                  <li className=" mt-2 pt-3 px-3">
-                    <NavLink
-                      to="/catalog"
-                      className="block px-5 py-2 text-sm font-medium text-white bg-[#4295E4] hover:bg-[#2f7acc] transition"
-                      onClick={() => setIsCatalogOpen(false)}
+              {/* === РЕЗУЛЬТАТЫ === */}
+              {showResults && searchResults.length > 0 && (
+                <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden">
+                  {searchResults.map((lock) => (
+                    <button
+                      key={lock.id}
+                      onClick={() => handleResultClick(lock)}
+                      className="w-full p-4 flex items-center gap-4 hover:bg-gray-50 transition-colors text-left"
                     >
-                      Смотреть все
-                    </NavLink>
-                  </li>
-                </ul>
-              </div>
-            )}
-          </li>
+                      <img
+                        src={`${API_URL}${lock.image_path}`}
+                        alt={lock.name}
+                        className="w-12 h-12 object-contain rounded-lg bg-gray-50"
+                        loading="lazy"
+                      />
+                      <div className="flex-1">
+                        <p className="font-medium text-gray-900 truncate">{lock.name}</p>
+                        <p className="text-sm text-indigo-600 font-semibold">
+                          {lock.price_with_discount || lock.price}₽
+                        </p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
 
-          {/* Оптовая продажа */}
-          <li>
-            <NavLink
-              to="/wholesale"
-              className="hover:underline transition"
+          {/* === ИКОНКИ === */}
+          <div className="hidden md:flex items-center space-x-6">
+            <Link to="/favorites" className="relative group" aria-label="Корзина">
+              <FontAwesomeIcon
+                icon={faShoppingCart}
+                className="text-xl text-gray-700 group-hover:text-indigo-600 transition-colors"
+              />
+              <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold">
+                3
+              </span>
+            </Link>
 
-            >
-              Оптовая продажа
-            </NavLink>
-          </li>
+            <Link to="/profile" className="group" aria-label="Профиль">
+              <FontAwesomeIcon
+                icon={faUser}
+                className="text-xl text-gray-700 group-hover:text-indigo-600 transition-colors"
+              />
+            </Link>
+          </div>
 
-          {/* О нас */}
-          <li>
-            <NavLink
-              to="/about"
-              className="hover:underline transition"
-            >
-              О нас
-            </NavLink>
-          </li>
-        </ul>
-      </nav>
+          {/* === МОБИЛЬНОЕ МЕНЮ === */}
+          <button
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            className="md:hidden"
+            aria-label="Меню"
+          >
+            <FontAwesomeIcon
+              icon={isMenuOpen ? faTimes : faBars}
+              className="text-2xl text-gray-700"
+            />
+          </button>
+        </div>
 
-      {/* Телефон и иконки */}
-      <div className="number flex items-center space-x- gap-5">
-        <img
-          src={`${API_URL}/images/icons/phone-header.svg`}
-          alt="call"
-          className="h-6"
-        />
-        <h1 className="text-xl">+7 (966) 55 88 499</h1>
-        <img
-          src={`${API_URL}/images/icons/heart-header.svg`}
-          alt="heart"
-          className=""
-        />
-        <img src={`${API_URL}/images/icons/cart-header.svg`} alt="cart" className="" />
+        {/* === МОБИЛЬНОЕ МЕНЮ === */}
+        {isMenuOpen && (
+          <div className="md:hidden pb-6 space-y-4">
+            <div className="relative">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={handleInputChange}
+                placeholder="Поиск..."
+                className="w-full px-5 py-3 pl-12 bg-gray-50 border border-gray-200 rounded-full text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+              <FontAwesomeIcon
+                icon={faSearch}
+                className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+              />
+            </div>
+
+            <div className="flex justify-center space-x-8 pt-4">
+              <Link to="/favorites" className="text-gray-700">
+                <FontAwesomeIcon icon={faShoppingCart} className="text-2xl" />
+              </Link>
+              <Link to="/profile" className="text-gray-700">
+                <FontAwesomeIcon icon={faUser} className="text-2xl" />
+              </Link>
+            </div>
+          </div>
+        )}
       </div>
     </header>
   );

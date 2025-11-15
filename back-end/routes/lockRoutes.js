@@ -1,11 +1,12 @@
 // back-end/routes/lockRoutes.js
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const lockController = require('../controllers/LockController');
+const lockController = require("../controllers/lockController");
 
-// Роуты
-router.get('/', lockController.getAllLocks);
-router.get('/slider', lockController.getSliderLocks);
-router.get('/popular', lockController.getPopularLocks); // ← ЗАПЯТАЯ!
+router.get("/", lockController.getAllLocks);
+router.get("/slider", lockController.getSliderLocks);
+router.get("/popular", lockController.getPopularLocks);
+router.get("/search", lockController.searchLocks);
+router.get("/:id", lockController.getLockById);
 
 module.exports = router;

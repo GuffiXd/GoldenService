@@ -36,11 +36,6 @@ const Lock = sequelize.define(
       allowNull: false,
       validate: { notEmpty: true },
     },
-    is_featured: {
-      type: DataTypes.BOOLEAN,
-      allowNull: false,
-      defaultValue: false,
-    },
     is_popular: {
       type: DataTypes.BOOLEAN,
       allowNull: false,
@@ -70,7 +65,6 @@ const Lock = sequelize.define(
     tableName: "locks",
     timestamps: true,
     indexes: [
-      { fields: ["is_featured"] },
       { fields: ["is_popular"] },
       { fields: ["in_stock"] }, // индекс для быстрого поиска
       { fields: ["categoryId"] },

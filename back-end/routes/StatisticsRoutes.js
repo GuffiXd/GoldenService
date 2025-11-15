@@ -1,8 +1,6 @@
-// back-end/routes/StatisticsRoutes.js
-const express = require('express');
-const router = express.Router();
-const StatisticsController = require('../controllers/StatisticsController');
+const router = require("express").Router();
+const statisticsController = require("../controllers/statisticsController");
 
-router.get('/', StatisticsController.getStatistics);
+router.get("/", statisticsController.getAll);
 
 module.exports = router;

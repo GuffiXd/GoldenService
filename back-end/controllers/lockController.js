@@ -1,50 +1,173 @@
 // back-end/controllers/lockController.js
-const Lock = require('../models/LockModel');
-const { Op } = require('sequelize');
+const Lock = require("../models/LockModel");
+const { Op } = require("sequelize");
 
-// ВСЁ В ОДНОМ ОБЪЕКТЕ — ЧИСТО И ПРАВИЛЬНО
+// Валидация и санитизация параметров
+const parsePagination = (page = 1, limit = 12) => {
+  const parsedPage = Math.max(1, parseInt(page, 10));
+  const parsedLimit = Math.min(50, Math.max(1, parseInt(limit, 10)));
+  return { page: parsedPage, limit: parsedLimit };
+};
+
+const parseSort = (sort = "createdAt", order = "DESC") => {
+  const validSortFields = ["name", "price", "createdAt", "updatedAt"];
+  const validOrder = ["ASC", "DESC"];
+
+  const field = validSortFields.includes(sort) ? sort : "createdAt";
+  const dir = validOrder.includes(order.toUpperCase()) ? order.toUpperCase() : "DESC";
+  return [[field, dir]];
+};
+
 const lockController = {
-  // Все замки
+  // === 1. Все замки (с пагинацией, фильтрами, поиском) ===
   getAllLocks: async (req, res) => {
     try {
-      const locks = await Lock.findAll();
-      res.json(locks);
+      const {
+        page,
+        limit,
+        search,
+        category,
+        min_price,
+        max_price,
+        in_stock,
+        sort,
+        order,
+      } = req.query;
+
+      const { page: currentPage, limit: pageSize } = parsePagination(page, limit);
+      const offset = (currentPage - 1) * pageSize;
+
+      // Условия фильтрации
+      const where = {};
+
+      if (search && search.trim().length >= 2) {
+        where[Op.or] = [
+          { name: { [Op.like]: `%${search.trim()}%` } },
+          { article: { [Op.like]: `%${search.trim()}%` } },
+        ];
+      }
+
+      if (category) where.categoryId = category;
+      if (in_stock === "true") where.in_stock = true;
+
+      if (min_price || max_price) {
+        where.price = {};
+        if (min_price) where.price[Op.gte] = parseFloat(min_price);
+        if (max_price) where.price[Op.lte] = parseFloat(max_price);
+      }
+
+      const { count, rows } = await Lock.findAndCountAll({
+        where,
+        order: parseSort(sort, order),
+        limit: pageSize,
+        offset,
+        attributes: [
+          "id",
+          "name",
+          "article",
+          "price",
+          "price_with_discount",
+          "image_path",
+          "in_stock",
+          "is_popular",
+          "is_featured",
+          "categoryId",
+        ],
+      });
+
+      res.json({
+        data: rows,
+        pagination: {
+          total: count,
+          page: currentPage,
+          limit: pageSize,
+          pages: Math.ceil(count / pageSize),
+        },
+      });
     } catch (err) {
-      res.status(500).json({ error: err.message });
+      console.error("getAllLocks error:", err);
+      res.status(500).json({ error: "Ошибка сервера" });
     }
   },
 
-  // Слайдер (избранные + со скидкой)
+  // === 2. Слайдер (акции: избранные + со скидкой) ===
   getSliderLocks: async (req, res) => {
     try {
       const slider = await Lock.findAll({
         where: {
           is_featured: true,
-          price_with_discount: { [Op.not]: null }
+          price_with_discount: { [Op.not]: null },
         },
         limit: 5,
-        order: [['createdAt', 'DESC']]
+        order: [["updatedAt", "DESC"]],
+        attributes: ["id", "name", "price", "price_with_discount", "image_path"],
       });
+
       res.json(slider);
     } catch (err) {
-      res.status(500).json({ error: err.message });
+      console.error("getSliderLocks error:", err);
+      res.status(500).json({ error: "Ошибка сервера" });
     }
   },
 
-  // Популярные
+  // === 3. Популярные замки ===
   getPopularLocks: async (req, res) => {
     try {
-      const popularLocks = await Lock.findAll({
+      const popular = await Lock.findAll({
         where: { is_popular: true },
         limit: 8,
-        order: [["createdAt", "DESC"]],
+        order: [["updatedAt", "DESC"]],
+        attributes: ["id", "name", "price", "price_with_discount", "image_path"],
       });
-      res.json(popularLocks);
-    } catch (error) {
-      console.error("Ошибка при получении популярных замков:", error);
+
+      res.json(popular);
+    } catch (err) {
+      console.error("getPopularLocks error:", err);
       res.status(500).json({ error: "Ошибка сервера" });
     }
-  }
+  },
+
+  // === 4. Поиск для хедера (быстрый, лёгкий) ===
+  searchLocks: async (req, res) => {
+    try {
+      const { q } = req.query;
+      if (!q || q.trim().length < 2) return res.json([]);
+
+      const results = await Lock.findAll({
+        where: {
+          [Op.or]: [
+            { name: { [Op.like]: `%${q.trim()}%` } },
+            { article: { [Op.like]: `%${q.trim()}%` } },
+          ],
+        },
+        attributes: ["id", "name", "price", "price_with_discount", "image_path"],
+        limit: 5,
+      });
+
+      res.json(results);
+    } catch (err) {
+      console.error("searchLocks error:", err);
+      res.status(500).json({ error: "Ошибка поиска" });
+    }
+  },
+
+  // === 5. Один замок по ID ===
+  getLockById: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const lock = await Lock.findByPk(id, {
+        attributes: { exclude: ["createdAt", "updatedAt"] },
+      });
+
+      if (!lock) return res.status(404).json({ error: "Замок не найден" });
+
+      res.json(lock);
+    } catch (err) {
+      console.error("getLockById error:", err);
+      res.status(500).json({ error: "Ошибка сервера" });
+    }
+  },
 };
 
-module.exports = lockController; // ← ТОЛЬКО ЭТО!
+// === ЭКСПОРТ ===
+module.exports = lockController;

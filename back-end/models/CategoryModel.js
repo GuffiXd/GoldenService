@@ -15,18 +15,35 @@ const Category = sequelize.define(
       type: DataTypes.STRING(100),
       allowNull: false,
       unique: true,
-      validate: { notEmpty: true },
+      validate: {
+        notEmpty: { msg: "Название категории обязательно" },
+        len: [2, 100],
+      },
     },
     slug: {
       type: DataTypes.STRING(100),
       allowNull: false,
       unique: true,
+      validate: {
+        notEmpty: { msg: "Slug обязателен" },
+        is: /^[a-z0-9-]+$/i, // только буквы, цифры, дефис
+      },
+    },
+    image_path: {
+      type: DataTypes.STRING(255),
+      allowNull: true, // можно без картинки
+      validate: {
+        is: /\.(webp|jpg|jpeg|png|svg)$/i, // только изображения
+      },
     },
   },
   {
     tableName: "categories",
     timestamps: true,
-    indexes: [{ fields: ["slug"] }],
+    indexes: [
+      { fields: ["slug"], unique: true },
+      { fields: ["name"] },
+    ],
   }
 );
 
