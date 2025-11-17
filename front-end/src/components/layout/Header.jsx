@@ -1,3 +1,4 @@
+// src/components/layout/Header.jsx
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -7,10 +8,11 @@ import {
   faUser,
   faBars,
   faTimes,
+  faSignOutAlt,
 } from "@fortawesome/free-solid-svg-icons";
 import { debounce } from "lodash";
-
-const API_URL = "http://localhost:5000";
+import { useAuth } from "../../context/useAuth";
+import { API_URL } from "../../config/api";
 
 function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -19,46 +21,28 @@ function Header() {
   const [showResults, setShowResults] = useState(false);
   const searchRef = useRef(null);
   const navigate = useNavigate();
+  const { user, logout, loading } = useAuth();
 
-  // Создаём debounced функцию через useRef — один раз
-  const debouncedSearchRef = useRef(
-    debounce(async (query) => {
-      if (!query || query.trim().length < 2) {
+  const cartItemsCount = 0; // потом заменишь на useCart()
+
+  // Debounced поиск
+  const debouncedSearch = useRef(
+    debounce((query) => {
+      if (!query?.trim() || query.trim().length < 2) {
         setSearchResults([]);
         return;
       }
+      fetch(`${API_URL}/api/locks/search?q=${encodeURIComponent(query.trim())}`)
+        .then((res) => (res.ok ? res.json() : []))
+        .then((data) => setSearchResults(data.slice(0, 6)))
+        .catch(() => setSearchResults([]));
+    }, 350)
+  ).current;
 
-      try {
-        const res = await fetch(
-          `${API_URL}/api/locks/search?q=${encodeURIComponent(query.trim())}`
-        );
-        if (res.ok) {
-          const data = await res.json();
-          setSearchResults(data.slice(0, 5));
-        } else {
-          setSearchResults([]);
-        }
-      } catch (err) {
-        console.error("Ошибка поиска:", err);
-        setSearchResults([]);
-      }
-    }, 300)
-  );
-
-  // Запуск поиска
   useEffect(() => {
-    debouncedSearchRef.current(searchQuery);
-  }, [searchQuery]);
+    debouncedSearch(searchQuery);
+  }, [searchQuery, debouncedSearch]);
 
-  // Очистка при размонтировании
-  useEffect(() => {
-    const currentDebounce = debouncedSearchRef.current;
-    return () => {
-      currentDebounce.cancel();
-    };
-  }, []);
-
-  // Закрытие при клике вне
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (searchRef.current && !searchRef.current.contains(event.target)) {
@@ -72,65 +56,101 @@ function Header() {
   const handleResultClick = (lock) => {
     setSearchQuery("");
     setShowResults(false);
-    setSearchResults([]);
     navigate(`/product/${lock.id}`);
   };
 
-  const handleInputChange = (e) => {
-    const value = e.target.value;
-    setSearchQuery(value);
-    if (value.length >= 2) setShowResults(true);
+  // Компонент авторизации с loading
+  const AuthSection = () => {
+    if (loading) {
+      return (
+        <div className="flex items-center space-x-4">
+          <div className="w-32 h-8 bg-gray-200 rounded-full animate-pulse" />
+          <div className="w-8 h-8 bg-gray-200 rounded-full animate-pulse" />
+        </div>
+      );
+    }
+
+    if (user) {
+      return (
+        <div className="flex items-center space-x-4">
+          <span className="text-gray-700 font-medium hidden sm:block">
+            Привет, {user.name.split(" ")[0]}!
+          </span>
+          <button
+            onClick={logout}
+            className="text-gray-600 hover:text-red-600 transition"
+            title="Выйти"
+          >
+            <FontAwesomeIcon icon={faSignOutAlt} className="text-xl" />
+          </button>
+        </div>
+      );
+    }
+
+    return (
+      <button
+        onClick={() => navigate("/auth")}
+        className="flex items-center space-x-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-3 rounded-2xl font-bold hover:scale-105 transition shadow-lg"
+      >
+        <FontAwesomeIcon icon={faUser} />
+        <span>Войти</span>
+      </button>
+    );
   };
 
   return (
-    <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-xl shadow-lg border-b border-gray-100">
+    <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-2xl shadow-lg border-b border-gray-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
-          {/* === ЛОГО === */}
-          <Link to="/" className="flex items-center space-x-2 group">
-            <div className="w-10 h-10 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-xl flex items-center justify-center shadow-md group-hover:scale-110 transition-transform">
-              <span className="text-white font-black text-lg">G</span>
+
+          {/* ЛОГО */}
+          <Link to="/" className="flex items-center space-x-3 group">
+            <div className="w-11 h-11 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition">
+              <span className="text-white font-black text-2xl">G</span>
             </div>
-            <span className="text-2xl font-black text-gray-900">GoldenSoft</span>
+            <span className="text-2xl font-black text-gray-900 hidden sm:block">GoldenSoft</span>
           </Link>
 
-          {/* === ПОИСК (десктоп) === */}
-          <div className="hidden md:block flex-1 max-w-xl mx-8" ref={searchRef}>
-            <div className="relative">
+          {/* ПОИСК — ДЕСКТОП */}
+          <div className="hidden lg:flex flex-1 max-w-2xl mx-10" ref={searchRef}>
+            <div className="relative w-full">
               <input
                 type="text"
                 value={searchQuery}
-                onChange={handleInputChange}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  if (e.target.value.length >= 2) setShowResults(true);
+                }}
                 onFocus={() => searchResults.length > 0 && setShowResults(true)}
                 placeholder="Поиск замков..."
-                className="w-full px-5 py-3 pl-12 bg-gray-50 border border-gray-200 rounded-full text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                className="w-full px-6 py-4 pl-14 bg-gray-50 border border-gray-200 rounded-full text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 transition-all text-lg"
               />
               <FontAwesomeIcon
                 icon={faSearch}
-                className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+                className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 text-xl"
               />
 
-              {/* === РЕЗУЛЬТАТЫ === */}
               {showResults && searchResults.length > 0 && (
-                <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden">
+                <div className="absolute top-full left-0 right-0 mt-3 bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden z-50">
                   {searchResults.map((lock) => (
                     <button
                       key={lock.id}
                       onClick={() => handleResultClick(lock)}
-                      className="w-full p-4 flex items-center gap-4 hover:bg-gray-50 transition-colors text-left"
+                      className="w-full px-6 py-5 flex items-center gap-5 hover:bg-gray-50 transition-all text-left border-b border-gray-50 last:border-0"
                     >
                       <img
                         src={`${API_URL}${lock.image_path}`}
                         alt={lock.name}
-                        className="w-12 h-12 object-contain rounded-lg bg-gray-50"
+                        className="w-16 h-16 object-cover rounded-xl bg-gray-50 shadow-sm"
                         loading="lazy"
                       />
                       <div className="flex-1">
-                        <p className="font-medium text-gray-900 truncate">{lock.name}</p>
-                        <p className="text-sm text-indigo-600 font-semibold">
-                          {lock.price_with_discount || lock.price}₽
-                        </p>
+                        <p className="font-semibold text-gray-900 line-clamp-1">{lock.name}</p>
+                        <p className="text-sm text-gray-500">{lock.short_description || "Умный замок"}</p>
                       </div>
+                      <p className="text-xl font-bold text-indigo-600">
+                        {(lock.price_with_discount || lock.price).toLocaleString()} ₽
+                      </p>
                     </button>
                   ))}
                 </div>
@@ -138,63 +158,76 @@ function Header() {
             </div>
           </div>
 
-          {/* === ИКОНКИ === */}
-          <div className="hidden md:flex items-center space-x-6">
-            <Link to="/favorites" className="relative group" aria-label="Корзина">
-              <FontAwesomeIcon
-                icon={faShoppingCart}
-                className="text-xl text-gray-700 group-hover:text-indigo-600 transition-colors"
-              />
-              <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold">
-                3
-              </span>
-            </Link>
+          {/* ПРАВАЯ ЧАСТЬ — ДЕСКТОП */}
+          <div className="hidden lg:flex items-center space-x-8">
+            <button onClick={() => navigate("/cart")} className="relative group" aria-label="Корзина">
+              <FontAwesomeIcon icon={faShoppingCart} className="text-2xl text-gray-700 group-hover:text-indigo-600 transition" />
+              {cartItemsCount > 0 && (
+                <span className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center animate-pulse">
+                  {cartItemsCount}
+                </span>
+              )}
+            </button>
 
-            <Link to="/profile" className="group" aria-label="Профиль">
-              <FontAwesomeIcon
-                icon={faUser}
-                className="text-xl text-gray-700 group-hover:text-indigo-600 transition-colors"
-              />
-            </Link>
+            <AuthSection />
           </div>
 
-          {/* === МОБИЛЬНОЕ МЕНЮ === */}
+          {/* МОБИЛЬНАЯ КНОПКА */}
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="md:hidden"
-            aria-label="Меню"
+            className="lg:hidden text-2xl text-gray-700"
           >
-            <FontAwesomeIcon
-              icon={isMenuOpen ? faTimes : faBars}
-              className="text-2xl text-gray-700"
-            />
+            <FontAwesomeIcon icon={isMenuOpen ? faTimes : faBars} />
           </button>
         </div>
 
-        {/* === МОБИЛЬНОЕ МЕНЮ === */}
+        {/* МОБИЛЬНОЕ МЕНЮ */}
         {isMenuOpen && (
-          <div className="md:hidden pb-6 space-y-4">
-            <div className="relative">
+          <div className="lg:hidden pb-8 pt-4 border-t border-gray-100">
+            <div className="mb-6 relative">
               <input
                 type="text"
                 value={searchQuery}
-                onChange={handleInputChange}
-                placeholder="Поиск..."
-                className="w-full px-5 py-3 pl-12 bg-gray-50 border border-gray-200 rounded-full text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Поиск замков..."
+                className="w-full px-5 py-4 pl-12 bg-gray-50 border border-gray-200 rounded-full text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-4 focus:ring-indigo-100"
               />
-              <FontAwesomeIcon
-                icon={faSearch}
-                className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
-              />
+              <FontAwesomeIcon icon={faSearch} className="absolute left-4 top-1/  -translate-y-1/2 text-gray-400 text-xl" />
             </div>
 
-            <div className="flex justify-center space-x-8 pt-4">
-              <Link to="/favorites" className="text-gray-700">
+            <div className="flex flex-col space-y-6 text-center">
+              {loading ? (
+                <div className="h-10 bg-gray-200 rounded animate-pulse" />
+              ) : user ? (
+                <>
+                  <p className="text-lg font-semibold text-gray-800">
+                    Привет, {user.name.split(" ")[0]}!
+                  </p>
+                  <button onClick={() => { navigate("/profile"); setIsMenuOpen(false); }} className="text-indigo-600 font-bold text-lg">
+                    Личный кабинет
+                  </button>
+                  <button onClick={() => { logout(); setIsMenuOpen(false); }} className="text-red-600 font-bold text-lg">
+                    Выйти
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => { navigate("/auth"); setIsMenuOpen(false); }}
+                  className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-4 rounded-2xl font-bold text-lg shadow-lg"
+                >
+                  Войти в аккаунт
+                </button>
+              )}
+
+              <button
+                onClick={() => { navigate("/cart"); setIsMenuOpen(false); }}
+                className="flex items-center justify-center gap-3 text-gray-700"
+              >
                 <FontAwesomeIcon icon={faShoppingCart} className="text-2xl" />
-              </Link>
-              <Link to="/profile" className="text-gray-700">
-                <FontAwesomeIcon icon={faUser} className="text-2xl" />
-              </Link>
+                <span className="font-bold text-xl">
+                  Корзина {cartItemsCount > 0 && `(${cartItemsCount})`}
+                </span>
+              </button>
             </div>
           </div>
         )}

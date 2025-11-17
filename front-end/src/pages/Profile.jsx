@@ -1,6 +1,6 @@
 import React from 'react';
 
-function Catalog() {
+function Profile() {
   return (
     <div>
 
@@ -8,4 +8,4 @@ function Catalog() {
   );
 }
 
-export default Catalog;
+export default Profile;

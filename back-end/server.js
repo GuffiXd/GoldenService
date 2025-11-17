@@ -5,86 +5,123 @@ const helmet = require("helmet");
 const dotenv = require("dotenv");
 const path = require("path");
 
-// 🔹 Конфиг БД
-const sequelize = require("./config/db");
-
-// 🔹 СИД — УБЕДИСЬ, ЧТО ПУТЬ ПРАВИЛЬНЫЙ
-const seedDatabase = require("./seedDatabase");
-
-// 🔹 Маршруты
-const lockRoutes = require("./routes/LockRoutes");
-const statisticsRoutes = require("./routes/StatisticsRoutes");
-const categoryRoutes = require("./routes/CategoryRoutes");
-const callbackRoutes = require("./routes/CallbackRoutes");
-const wholesaleRoutes = require("./routes/WholesaleRoutes")
-const projectRoutes = require("./routes/ProjectRoutes");
-
+// ==================== КОНФИГ ====================
 dotenv.config();
-
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Middleware
+// Подключение к БД и сид
+const sequelize = require("./config/db");
+const seedDatabase = require("./seedDatabase");
+
+// ==================== РОУТЫ ====================
+const lockRoutes = require("./routes/LockRoutes");
+const categoryRoutes = require("./routes/CategoryRoutes");
+const statisticsRoutes = require("./routes/StatisticsRoutes");
+const projectRoutes = require("./routes/ProjectRoutes");
+const callbackRoutes = require("./routes/CallbackRoutes");
+const wholesaleRoutes = require("./routes/WholesaleRoutes");
+const authRoutes = require("./routes/AuthRoutes");
+const orderRoutes = require("./routes/OrdersRoutes");
+
+// ==================== МИДЛВАРЫ ====================
 app.use(cors({
   origin: ["http://localhost:5173", "http://127.0.0.1:5173"],
   credentials: true,
 }));
-app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
+
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+  contentSecurityPolicy: false, // если используешь Vite — лучше выключить
+}));
+
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
-// Статические файлы
+// Статические файлы (картинки)
 app.use("/images", express.static(path.join(__dirname, "images")));
 
-// Роуты
+// ==================== API РОУТЫ ====================
 app.use("/api/locks", lockRoutes);
-app.use("/api/statistics", statisticsRoutes);
 app.use("/api/categories", categoryRoutes);
-app.use("/api/form", callbackRoutes);
-app.use("/api/orders", wholesaleRoutes);
+app.use("/api/statistics", statisticsRoutes);
 app.use("/api/projects", projectRoutes);
+app.use("/api/form", callbackRoutes);
+app.use("/api/wholesale", wholesaleRoutes);    // опт
+app.use("/api/auth", authRoutes);             // регистрация/логин
+app.use("/api/orders", orderRoutes);          // заказы пользователей
 
-// Главная
+// ==================== ГЛАВНАЯ ====================
 app.get("/", (req, res) => {
-  res.json({ message: "GoldenService API работает!" });
+  res.json({
+    message: "Golden Soft API",
+    status: "работает",
+    time: new Date().toLocaleString("ru-RU"),
+    endpoints: {
+      locks: "/api/locks",
+      auth: "/api/auth",
+      orders: "/api/orders/my",
+      wholesale: "/api/wholesale"
+    }
+  });
 });
 
-// 404
-app.use((req, res) => {
-  res.status(404).json({ error: "Маршрут не найден" });
+// ==================== 404 ====================
+app.use((req, res, next) => {
+  res.status(404).json({
+    success: false,
+    message: `Маршрут ${req.originalUrl} не найден`,
+  });
 });
 
-// Ошибки
+// ==================== ГЛОБАЛЬНЫЙ ОБРАБОТЧИК ОШИБОК ====================
 app.use((err, req, res, next) => {
-  console.error("Ошибка:", err);
-  res.status(500).json({ error: "Серверная ошибка" });
+  console.error("Ошибка сервера:", err.stack || err);
+
+  res.status(err.status || 500).json({
+    success: false,
+    message: err.message || "Внутренняя ошибка сервера",
+    ...(process.env.NODE_ENV === "development" && { stack: err.stack }),
+  });
 });
 
-// === ЗАПУСК СЕРВЕРА ===
+// ==================== ЗАПУСК СЕРВЕРА ====================
 const startServer = async () => {
   try {
-    // 1. Подключение
+    console.log("Подключение к MySQL...");
     await sequelize.authenticate();
-    console.log("Подключение к MySQL: OK");
+    console.log("MySQL подключён");
 
-    // 2. Синхронизация
+    console.log("Синхронизация таблиц...");
     await sequelize.sync({ alter: true });
     console.log("Таблицы синхронизированы");
 
-    // 3. СИД — ВЫЗЫВАЕМ ЯВНО!
-    console.log("Запускаем заполнение БД...");
-    await seedDatabase();  // ← ЭТА СТРОКА ДОЛЖНА БЫТЬ!
+    console.log("Запуск сида (если БД пустая)...");
+    await seedDatabase();
     console.log("Сид завершён");
 
-    // 4. Сервер
     app.listen(PORT, "0.0.0.0", () => {
-      console.log(`Сервер: http://localhost:${PORT}`);
+      console.log("\nСервер успешно запущен!");
+      console.log(`http://localhost:${PORT}`);
+      console.log(`Режим: ${process.env.NODE_ENV || "development"}\n`);
     });
+
   } catch (error) {
-    console.error("ОШИБКА ЗАПУСКА:", error);
+    console.error("Не удалось запустить сервер:", error);
     process.exit(1);
   }
 };
 
-// === СТАРТ ===
+// Защита от необработанных ошибок
+process.on("unhandledRejection", (err) => {
+  console.error("Unhandled Rejection:", err);
+  process.exit(1);
+});
+
+process.on("uncaughtException", (err) => {
+  console.error("Uncaught Exception:", err);
+  process.exit(1);
+});
+
+// ==================== СТАРТ ====================
 startServer();

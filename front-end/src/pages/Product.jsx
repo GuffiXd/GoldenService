@@ -1,13 +1,12 @@
-import Header from "../components/layout/Header";
-import Footer from "../components/layout/Footer";
-import Promocode from "../components/layout/Promocode";
+import ProductSection from "../components/sections/ProductSection"; // ← вот правильное имя!
 
 function Product() {
   return (
-    <div>
-      <Promocode />
-      <Header />
-      <Footer />
+    <div className="min-h-screen flex flex-col">
+
+      <main className="flex-1">
+        <ProductSection />
+      </main>
     </div>
   );
 }

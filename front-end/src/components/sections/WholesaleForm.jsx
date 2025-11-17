@@ -186,7 +186,7 @@ function OrderForm() {
   return (
     <>
       <div
-        className={`min-h-max py-20 ${
+        className={`min-h-96 py-20 ${
           darkMode
             ? "bg-gray-900"
             : "bg-gradient-to-br from-indigo-50 via-white to-purple-50"

@@ -55,7 +55,10 @@ export default function PopularProducts() {
       <div className="max-w-7xl mx-auto px-6">
         {/* Заголовок */}
         <h2 className="animate-fade-in text-center text-4xl md:text-5xl font-black text-gray-900 mb-16 tracking-tight">
-          Популярные <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">продукты</span>
+          Популярные{" "}
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">
+            продукты
+          </span>
         </h2>
 
         {/* Сетка */}
@@ -82,8 +85,16 @@ export default function PopularProducts() {
 
                   {/* Статус */}
                   <div className="absolute top-4 left-4 flex items-center gap-2">
-                    <div className={`w-3 h-3 rounded-full ${product.in_stock ? "bg-emerald-500" : "bg-rose-500"}`} />
-                    <span className={`text-xs font-bold ${product.in_stock ? "text-emerald-700" : "text-rose-700"}`}>
+                    <div
+                      className={`w-3 h-3 rounded-full ${
+                        product.in_stock ? "bg-emerald-500" : "bg-rose-500"
+                      }`}
+                    />
+                    <span
+                      className={`text-xs font-bold ${
+                        product.in_stock ? "text-emerald-700" : "text-rose-700"
+                      }`}
+                    >
                       {product.in_stock ? "В наличии" : "Нет в наличии"}
                     </span>
                   </div>
@@ -106,11 +117,14 @@ export default function PopularProducts() {
 
                   <div className="flex items-center gap-3">
                     <span className="text-2xl font-black text-gray-900">
-                      ${Number(product.price_with_discount).toLocaleString("en-US")}
+                      ₽
+                      {Number(product.price_with_discount).toLocaleString(
+                        "ru-RU"
+                      )}
                     </span>
                     {product.price_with_discount && (
                       <span className="text-base text-gray-500 line-through">
-                        ${Number(product.price).toLocaleString("en-US")}
+                        ₽{Number(product.price).toLocaleString("ru-RU")}
                       </span>
                     )}
                   </div>

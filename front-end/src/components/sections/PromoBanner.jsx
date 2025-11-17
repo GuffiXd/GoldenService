@@ -8,9 +8,9 @@ function PromoBanner() {
   // Главный акционный товар (можно вынести в API позже)
   const promoLock = {
     id: 2,
-    name: "Golden Soft Mini",
-    price_with_discount: 120,
-    price: 180,
+    name: "Golden Soft Biometric",
+    price_with_discount: 33900,
+    price: 35900,
     image_path: "/images/products/rim-lock.webp", // ← поставь своё лучшее фото
   };
 
@@ -40,10 +40,10 @@ function PromoBanner() {
             <div className="flex flex-col sm:flex-row gap-4">
               <div className="flex items-baseline gap-3">
                 <span className="text-5xl font-bold text-white">
-                  {promoLock.price_with_discount.toLocaleString()}$
+                ₽{promoLock.price_with_discount.toLocaleString()}
                 </span>
                 <span className="text-2xl line-through text-gray-400">
-                  {promoLock.price.toLocaleString()}$
+                ₽{promoLock.price.toLocaleString()}
                 </span>
               </div>
             </div>
