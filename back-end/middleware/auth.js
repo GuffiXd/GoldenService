@@ -1,30 +1,25 @@
-// back-end/middleware/auth.js
+// middleware/auth.js
 const jwt = require("jsonwebtoken");
 
-const JWT_SECRET = process.env.JWT_SECRET || "golden-soft-super-secret-key-2025-change-in-prod";
+const JWT_SECRET = process.env.JWT_SECRET || "golden-soft-2025-secret";
 
-const authMiddleware = (req, res, next) => {
+module.exports = (req, res, next) => {
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return res.status(401).json({
-      success: false,
-      message: "Доступ запрещён. Токен не предоставлен",
-    });
+    return res.status(401).json({ success: false, message: "Нет токена" });
   }
 
   const token = authHeader.split(" ")[1];
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
-    req.user = { id: decoded.id, role: decoded.role }; // ← важно!
+    req.user = decoded; // ← вот это важно!
     next();
   } catch (err) {
-    return res.status(401).json({
-      success: false,
-      message: "Недействительный или просроченный токен",
+    return res.status(401).json({ 
+      success: false, 
+      message: "Недействительный или просроченный токен" 
     });
   }
 };
-
-module.exports = authMiddleware;

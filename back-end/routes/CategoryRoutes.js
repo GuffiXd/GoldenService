@@ -3,10 +3,10 @@ const express = require("express");
 const router = express.Router();
 const categoryController = require("../controllers/CategoryController");
 
-// Все категории
-router.get("/", categoryController.getAllCategories);
+// ВАЖНО: сначала СЛОЖНЫЕ маршруты, потом динамические
 
-// Категория + замки по slug
+router.get("/with-count", categoryController.getCategoriesWithCount); // ← НАВЕРХ
+router.get("/", categoryController.getAllCategories);
 router.get("/:slug", categoryController.getCategoryBySlug);
 
 module.exports = router;

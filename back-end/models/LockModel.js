@@ -1,20 +1,46 @@
 // back-end/models/LockModel.js
-const { DataTypes } = require("sequelize");
+const { Model, DataTypes } = require("sequelize");
 const sequelize = require("../config/db");
-const Category = require("./CategoryModel");
 
-const Lock = sequelize.define(
-  "Lock",
+/**
+ * Модель электронного замка
+ * Таблица: locks
+ */
+class Lock extends Model {}
+
+/**
+ * Инициализация модели Lock
+ */
+Lock.init(
   {
-    id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-    name: { type: DataTypes.STRING(255), allowNull: false },
-    article: { type: DataTypes.STRING(100), unique: true, allowNull: false },
+    id: {
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+      autoIncrement: true,
+      allowNull: false,
+    },
+
+    // Основные данные
+    name: {
+      type: DataTypes.STRING(255),
+      allowNull: false,
+      comment: "Полное название замка",
+    },
+    article: {
+      type: DataTypes.STRING(100),
+      allowNull: false,
+      unique: true,
+      comment: "Артикул (уникальный код товара)",
+    },
+
     price: {
       type: DataTypes.DECIMAL(12, 2),
       allowNull: false,
       get() {
-        return Number(this.getDataValue("price"));
+        const value = this.getDataValue("price");
+        return value ? Number(value) : 0;
       },
+      comment: "Цена без скидки",
     },
     price_with_discount: {
       type: DataTypes.DECIMAL(12, 2),
@@ -23,43 +49,93 @@ const Lock = sequelize.define(
         const value = this.getDataValue("price_with_discount");
         return value ? Number(value) : null;
       },
+      comment: "Цена со скидкой (если есть)",
     },
-    description: { type: DataTypes.TEXT, allowNull: true },
-    short_description: { type: DataTypes.STRING(512), allowNull: true }, // для карточки
-    image_path: { type: DataTypes.STRING(512), allowNull: false },
-    image_gallery: { type: DataTypes.JSON, defaultValue: [] }, // массив путей
-    is_popular: { type: DataTypes.BOOLEAN, defaultValue: false },
-    in_stock: { type: DataTypes.BOOLEAN, defaultValue: true },
 
-    // Новые поля — полные характеристики
-    door_type: { type: DataTypes.STRING(255) }, // "Деревянная", "Металлическая"
-    door_thickness: { type: DataTypes.STRING(100) }, // "35-50 мм"
-    unlocking_methods: { type: DataTypes.JSON }, // ["Палец", "Код", "Карта", "Ключ", "Лицо"]
-    battery_life: { type: DataTypes.STRING(100) }, // "До 12 месяцев"
-    material: { type: DataTypes.STRING(255) }, // "Сталь, алюминий"
-    color: { type: DataTypes.STRING(100) }, // "Чёрный", "Золото", "Серебро"
-    weight: { type: DataTypes.STRING(100) }, // "2.5 кг"
-    dimensions: { type: DataTypes.STRING(200) }, // "302мм × 43мм × 22.5мм"
-    waterproof: { type: DataTypes.STRING(100) }, // "IP65"
-    warranty: { type: DataTypes.STRING(100), defaultValue: "3 года" },
-    installation_time: { type: DataTypes.STRING(100) }, // "15 минут"
+    description: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      comment: "Полное описание для страницы товара",
+    },
+    short_description: {
+      type: DataTypes.STRING(512),
+      allowNull: true,
+      comment: "Краткое описание для карточки товара",
+    },
+
+    image_path: {
+      type: DataTypes.STRING(512),
+      allowNull: false,
+      comment: "Главное изображение замка",
+    },
+    image_gallery: {
+      type: DataTypes.JSON,
+      defaultValue: [],
+      comment: "Массив дополнительных изображений",
+    },
+
+    // Флаги
+    is_popular: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+      comment: "Популярный товар (выводится в блоке 'Хиты продаж')",
+    },
+    in_stock: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: true,
+      comment: "Наличие на складе",
+    },
+
+    // Технические характеристики
+    door_type: { type: DataTypes.STRING(255), comment: "Тип двери: деревянная, металлическая и т.д." },
+    door_thickness: { type: DataTypes.STRING(100), comment: "Толщина двери, например: 35-50 мм" },
+    unlocking_methods: {
+      type: DataTypes.JSON,
+      defaultValue: [],
+      comment: '["Палец", "Код", "Карта", "Ключ", "Лицо"]',
+    },
+    battery_life: { type: DataTypes.STRING(100), comment: "Срок работы от батареи" },
+    material: { type: DataTypes.STRING(255), comment: "Материал корпуса" },
+    color: { type: DataTypes.STRING(100), comment: "Цвет замка" },
+    weight: { type: DataTypes.STRING(100), comment: "Вес замка" },
+    dimensions: { type: DataTypes.STRING(200), comment: "Габариты: длина × ширина × высота" },
+    waterproof: { type: DataTypes.STRING(100), comment: "Степень защиты от воды, например: IP65" },
+    warranty: {
+      type: DataTypes.STRING(100),
+      defaultValue: "3 года",
+      comment: "Гарантия",
+    },
+    installation_time: { type: DataTypes.STRING(100), comment: "Время установки" },
     app_support: { type: DataTypes.BOOLEAN, defaultValue: false },
     face_id: { type: DataTypes.BOOLEAN, defaultValue: false },
     wifi: { type: DataTypes.BOOLEAN, defaultValue: false },
 
+    // Внешний ключ
     categoryId: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      references: { model: Category, key: "id" },
+      references: {
+        model: "categories",
+        key: "id",
+      },
+      comment: "ID категории замка",
     },
   },
   {
-    tableName: "locks",
+    sequelize,
+    modelName: "Lock",           // Имя модели в коде
+    tableName: "locks",          // Имя таблицы в БД
     timestamps: true,
+    charset: "utf8mb4",
+    collate: "utf8mb4_unicode_ci",
+    indexes: [
+      { fields: ["article"], unique: true },
+      { fields: ["categoryId"] },
+      { fields: ["is_popular"] },
+      { fields: ["in_stock"] },
+      { fields: ["price"] },
+    ],
   }
 );
-
-Lock.belongsTo(Category, { foreignKey: "categoryId" });
-Category.hasMany(Lock, { foreignKey: "categoryId" });
 
 module.exports = Lock;

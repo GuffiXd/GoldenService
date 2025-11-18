@@ -1,0 +1,30 @@
+// src/components/profile/ProfileInfo.jsx
+import React from "react";
+import { useAuth } from "../../context/useAuth";   // ← ДОБАВЬ ЭТУ СТРОЧКУ!
+
+export default function ProfileInfo() {
+  const { user } = useAuth();   // теперь всё ок
+
+  return (
+    <div className="space-y-6">
+      <h2 className="text-3xl font-bold text-gray-900">Мои данные</h2>
+      <div className="bg-gray-50 rounded-2xl p-8 space-y-6">
+        <div>
+          <label className="text-sm text-gray-500">Имя</label>
+          <p className="text-xl font-semibold">{user?.name}</p>
+        </div>
+        <div>
+          <label className="text-sm text-gray-500">Email</label>
+          <p className="text-xl font-semibold">{user?.email}</p>
+        </div>
+        <div>
+          <label className="text-sm text-gray-500">Телефон</label>
+          <p className="text-xl font-semibold">{user?.phone || "Не указан"}</p>
+        </div>
+        <button className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-8 py-4 rounded-2xl font-bold hover:scale-105 transition shadow-lg">
+          Редактировать профиль
+        </button>
+      </div>
+    </div>
+  );
+}

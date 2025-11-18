@@ -193,7 +193,7 @@ function Footer() {
               <ul className="space-y-3 text-gray-400">
                 <li>
                   <Link
-                    to="/main"
+                    to="/"
                     className="hover:text-white transition-colors duration-300 flex items-center gap-2"
                   >
                     <div className="w-1 h-1 bg-indigo-500 rounded-full opacity-0 group-hover:opacity-100 transition" />

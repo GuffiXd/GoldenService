@@ -1,37 +1,83 @@
-// models/OrderModel.js
-const { DataTypes } = require("sequelize");
+// back-end/models/OrderModel.js
+const { Model, DataTypes } = require("sequelize");
 const sequelize = require("../config/db");
-const User = require("./UserModel");
 
-const Order = sequelize.define("Order", {
-  id: {
-    type: DataTypes.INTEGER,
-    autoIncrement: true,
-    primaryKey: true,
-  },
-  total_price: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    comment: "В копейках (или рублях ×100, если хочешь точность)",
-  },
-  status: {
-    type: DataTypes.ENUM("new", "processing", "shipped", "completed", "canceled"),
-    defaultValue: "new",
-  },
-  payment_method: { type: DataTypes.STRING(50), allowNull: false },
-  comment: { type: DataTypes.TEXT },
+/**
+ * Модель заказа пользователя
+ * Таблица: orders
+ */
+class Order extends Model {}
 
-  // Адрес доставки
-  address: DataTypes.STRING,
-  city: DataTypes.STRING,
-  postcode: DataTypes.STRING,
-  country: { type: DataTypes.STRING, defaultValue: "Россия" },
-}, {
-  timestamps: true,
-});
+/**
+ * Инициализация модели Order
+ */
+Order.init(
+  {
+    id: {
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+      autoIncrement: true,
+      allowNull: false,
+    },
 
-// Связи
-User.hasMany(Order, { foreignKey: "userId" });
-Order.belongsTo(User, { foreignKey: "userId" });
+    total_price: {
+      type: DataTypes.DECIMAL(14, 2),
+      allowNull: false,
+      comment: "Общая сумма заказа в рублях (с копейками)",
+      get() {
+        const value = this.getDataValue("total_price");
+        return value ? Number(value) : 0;
+      },
+    },
+
+    status: {
+      type: DataTypes.ENUM("new", "processing", "shipped", "completed", "canceled"),
+      allowNull: false,
+      defaultValue: "new",
+      comment: "Статус заказа",
+    },
+
+    payment_method: {
+      type: DataTypes.STRING(50),
+      allowNull: false,
+      comment: "Способ оплаты",
+    },
+
+    comment: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      comment: "Комментарий к заказу",
+    },
+
+    // Адрес доставки
+    address: { type: DataTypes.STRING(255), allowNull: true },
+    city: { type: DataTypes.STRING(100), allowNull: true },
+    postcode: { type: DataTypes.STRING(20), allowNull: true },
+    country: {
+      type: DataTypes.STRING(100),
+      allowNull: false,
+      defaultValue: "Россия",
+    },
+
+    userId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      comment: "ID пользователя (если заказ от зарегистрированного)",
+    },
+  },
+  {
+    sequelize,
+    modelName: "Order",
+    tableName: "orders",
+    timestamps: true,
+    charset: "utf8mb4",
+    collate: "utf8mb4_unicode_ci",
+    indexes: [
+      { fields: ["status"] },
+      { fields: ["createdAt"] },
+      { fields: ["userId"] },
+    ],
+  }
+);
 
 module.exports = Order;

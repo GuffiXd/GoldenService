@@ -3,7 +3,6 @@ import { useInView, useMotionValue, useSpring } from "framer-motion";
 import { Users, Package, ShoppingCart, Award } from "lucide-react";
 
 const API_URL = "http://localhost:5000";
-
 const icons = [Users, Package, ShoppingCart, Award];
 
 function AnimatedCounter({ value }) {
@@ -30,7 +29,7 @@ function AnimatedCounter({ value }) {
 
 function Statistics() {
   const [stats, setStats] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -41,7 +40,6 @@ function Statistics() {
         const { data, timestamp } = JSON.parse(cachedData);
         const cacheAge = Date.now() - timestamp;
 
-        // Кэш свежий (менее 5 мин)
         if (cacheAge < 5 * 60 * 1000) {
           setStats(data);
           setLoading(false);
@@ -52,12 +50,11 @@ function Statistics() {
       try {
         const res = await fetch(`${API_URL}/api/statistics`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
 
+        const data = await res.json();
         setStats(data);
         setLoading(false);
 
-        // Сохраняем в кэш
         localStorage.setItem(
           cacheKey,
           JSON.stringify({ data, timestamp: Date.now() })
@@ -103,7 +100,7 @@ function Statistics() {
             return (
               <div
                 key={stat.id}
-                className="flex flex-col items-center text-center group animate-fade-in"
+                className="flex flex-col items-center text-center group"
                 style={{ animationDelay: `${index * 150}ms` }}
               >
                 {/* Иконка */}

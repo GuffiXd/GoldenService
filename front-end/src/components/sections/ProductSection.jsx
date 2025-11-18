@@ -1,7 +1,7 @@
 // src/components/sections/ProductSection.jsx
 import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import { Heart, ShoppingCart, Check, Shield, Clock, Star, Truck, Sparkles } from "lucide-react";
+import { Heart, ShoppingCart, Check, Shield, Clock, Star, Truck, Sparkles, User } from "lucide-react";
 
 const API_URL = "http://localhost:5000";
 
@@ -10,6 +10,30 @@ const formatPrice = (value) => {
   if (value === null || value === undefined || value === "") return "—";
   const num = Number(value);
   return isNaN(num) ? "—" : num.toLocaleString("ru-RU");
+};
+
+// Форматирование даты отзыва: "15 марта 2025"
+const formatReviewDate = (dateString) => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString("ru-RU", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+};
+
+// Компонент одной звёздочки (для рейтинга)
+const StarRating = ({ rating }) => {
+  return (
+    <div className="flex">
+      {[...Array(5)].map((_, i) => (
+        <Star
+          key={i}
+          className={`w-5 h-5 ${i < rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`}
+        />
+      ))}
+    </div>
+  );
 };
 
 export default function ProductSection() {
@@ -60,6 +84,7 @@ export default function ProductSection() {
   const totalPrice = currentPrice * quantity;
 
   const allImages = [product.image_path, ...(product.image_gallery || [])];
+  const reviews = product.reviews || []; // ← Вот они, настоящие отзывы!
 
   return (
     <section className="py-12 md:py-20 bg-gradient-to-b from-indigo-50 via-white to-purple-50 min-h-screen">
@@ -70,6 +95,14 @@ export default function ProductSection() {
           <Link to="/" className="hover:text-indigo-600 transition">Главная</Link>
           <span>→</span>
           <Link to="/catalog" className="hover:text-indigo-600 transition">Каталог</Link>
+          {product.category && (
+            <>
+              <span>→</span>
+              <Link to={`/catalog?category=${product.category.slug}`} className="hover:text-indigo-600 transition">
+                {product.category.name}
+              </Link>
+            </>
+          )}
           <span>→</span>
           <span className="text-indigo-600 font-medium">{product.name}</span>
         </nav>
@@ -78,7 +111,6 @@ export default function ProductSection() {
 
           {/* Левая часть — фото */}
           <div className="space-y-6">
-            {/* Главное фото */}
             <div className="relative group">
               <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/20 to-purple-600/20 rounded-3xl blur-3xl opacity-70 group-hover:opacity-100 transition-opacity duration-700 -z-10"></div>
               <img
@@ -92,7 +124,6 @@ export default function ProductSection() {
               </div>
             </div>
 
-            {/* Миниатюры */}
             {allImages.length > 1 && (
               <div className="grid grid-cols-5 gap-4">
                 {allImages.map((img, i) => (
@@ -105,18 +136,14 @@ export default function ProductSection() {
                         : "border-transparent hover:border-indigo-300"
                     }`}
                   >
-                    <img
-                      src={`${API_URL}${img}`}
-                      alt=""
-                      className="w-full h-24 object-cover"
-                    />
+                    <img src={`${API_URL}${img}`} alt="" className="w-full h-24 object-cover" />
                   </button>
                 ))}
               </div>
             )}
           </div>
 
-          {/* Правая часть — инфа */}
+          {/* Правая часть — информация */}
           <div className="space-y-8">
             <div>
               <h1 className="text-4xl md:text-5xl font-black text-gray-900 leading-tight">
@@ -124,15 +151,18 @@ export default function ProductSection() {
               </h1>
               <p className="text-xl text-gray-600 mt-3">Артикул: {product.article}</p>
 
-              <div className="flex items-center gap-6 mt-6">
-                <div className="flex text-yellow-500">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="w-6 h-6 fill-current" />
-                  ))}
+              {/* Рейтинг из отзывов */}
+              {reviews.length > 0 && (
+                <div className="flex items-center gap-6 mt-6">
+                  <StarRating rating={Math.round(reviews.reduce((a, r) => a + r.rating, 0) / reviews.length)} />
+                  <span className="text-lg font-bold text-gray-700">
+                    {reviews.length > 0
+                      ? (reviews.reduce((a, r) => a + r.rating, 0) / reviews.length).toFixed(1)
+                      : "—"}
+                  </span>
+                  <span className="text-gray-600">({reviews.length} отзывов)</span>
                 </div>
-                <span className="text-lg font-bold text-gray-700">4.9</span>
-                <span className="text-gray-600">(127 отзывов)</span>
-              </div>
+              )}
             </div>
 
             {/* Цена */}
@@ -141,9 +171,7 @@ export default function ProductSection() {
                 {formatPrice(currentPrice)} ₽
               </span>
               {oldPrice && (
-                <del className="text-3xl text-gray-400">
-                  {formatPrice(oldPrice)} ₽
-                </del>
+                <del className="text-3xl text-gray-400">{formatPrice(oldPrice)} ₽</del>
               )}
               {oldPrice && (
                 <span className="bg-rose-500 text-white px-4 py-2 rounded-full font-bold text-lg">
@@ -238,33 +266,48 @@ export default function ProductSection() {
           </div>
         </div>
 
-        {/* Отзывы */}
+        {/* ОТЗЫВЫ — РЕАЛЬНЫЕ ИЗ БАЗЫ! */}
         <div className="mt-24">
-          <h3 className="text-4xl md:text-5xl font-black text-center mb-16">Что говорят покупатели</h3>
-          <div className="grid md:grid-cols-3 gap-8">
-            {[
-              { name: "Алексей", text: "Установка прошла за 35 минут! Работает идеально, дети в восторге от отпечатка." },
-              { name: "Екатерина", text: "Приложение удобное, можно открыть дверь со смартфона из любой точки мира!" },
-              { name: "Дмитрий", text: "Качество на высоте. За такие деньги — просто находка. Рекомендую всем!" },
-            ].map((review, i) => (
-              <div key={i} className="bg-white rounded-3xl shadow-2xl p-8 border border-gray-100 hover:shadow-3xl transition-all">
-                <div className="flex items-center gap-4 mb-6">
-                  <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-white text-2xl font-black">
-                    {review.name[0]}
-                  </div>
-                  <div>
-                    <p className="font-bold text-xl text-gray-900">{review.name}</p>
-                    <div className="flex text-yellow-500">
-                      {[...Array(5)].map((_, j) => <Star key={j} className="w-5 h-5 fill-current" />)}
+          <h3 className="text-4xl md:text-5xl font-black text-center mb-16">
+            {reviews.length > 0 ? `Отзывы покупателей (${reviews.length})` : "Пока нет отзывов"}
+          </h3>
+
+          {reviews.length === 0 ? (
+            <div className="text-center py-16 bg-white rounded-3xl shadow-xl">
+              <User className="w-20 h-20 text-gray-300 mx-auto mb-6" />
+              <p className="text-xl text-gray-600">Будьте первым, кто оставит отзыв!</p>
+            </div>
+          ) : (
+            <div className="grid md:grid-cols-3 gap-8">
+              {reviews.map((review) => (
+                <div
+                  key={review.id}
+                  className="bg-white rounded-3xl shadow-2xl p-8 border border-gray-100 hover:shadow-3xl transition-all"
+                >
+                  <div className="flex items-center gap-4 mb-6">
+                    <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-white text-2xl font-black">
+                      {review.author[0]}
+                    </div>
+                    <div>
+                      <p className="font-bold text-xl text-gray-900">{review.author}</p>
+                      <div className="flex items-center gap-3">
+                        <StarRating rating={review.rating} />
+                        {review.isVerified && (
+                          <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full">
+                            Проверенный покупатель
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
+                  <p className="text-gray-700 leading-relaxed text-lg">{review.text}</p>
+                  <p className="text-sm text-gray-500 mt-4">{formatReviewDate(review.date || review.createdAt)}</p>
                 </div>
-                <p className="text-gray-700 leading-relaxed text-lg">{review.text}</p>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </section>
   );
-}
+} 

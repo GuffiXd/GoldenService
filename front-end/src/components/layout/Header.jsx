@@ -23,7 +23,7 @@ function Header() {
   const navigate = useNavigate();
   const { user, logout, loading } = useAuth();
 
-  const cartItemsCount = 0; // потом заменишь на useCart()
+  const cartItemsCount = 0; // потом подключишь useCart()
 
   // Debounced поиск
   const debouncedSearch = useRef(
@@ -34,14 +34,12 @@ function Header() {
       }
       fetch(`${API_URL}/api/locks/search?q=${encodeURIComponent(query.trim())}`)
         .then((res) => (res.ok ? res.json() : []))
-        .then((data) => setSearchResults(data.slice(0, 6)))
+        .then((data) => setSearchResults(Array.isArray(data) ? data.slice(0, 6) : []))
         .catch(() => setSearchResults([]));
     }, 350)
   ).current;
 
-  useEffect(() => {
-    debouncedSearch(searchQuery);
-  }, [searchQuery, debouncedSearch]);
+  useEffect(() => debouncedSearch(searchQuery), [searchQuery, debouncedSearch]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -59,43 +57,16 @@ function Header() {
     navigate(`/product/${lock.id}`);
   };
 
-  // Компонент авторизации с loading
-  const AuthSection = () => {
-    if (loading) {
-      return (
-        <div className="flex items-center space-x-4">
-          <div className="w-32 h-8 bg-gray-200 rounded-full animate-pulse" />
-          <div className="w-8 h-8 bg-gray-200 rounded-full animate-pulse" />
-        </div>
-      );
-    }
+  // Безопасное получение первой буквы имени
+  const getUserInitial = () => {
+    if (!user?.name) return "?";
+    return user.name.trim().charAt(0).toUpperCase();
+  };
 
-    if (user) {
-      return (
-        <div className="flex items-center space-x-4">
-          <span className="text-gray-700 font-medium hidden sm:block">
-            Привет, {user.name.split(" ")[0]}!
-          </span>
-          <button
-            onClick={logout}
-            className="text-gray-600 hover:text-red-600 transition"
-            title="Выйти"
-          >
-            <FontAwesomeIcon icon={faSignOutAlt} className="text-xl" />
-          </button>
-        </div>
-      );
-    }
-
-    return (
-      <button
-        onClick={() => navigate("/auth")}
-        className="flex items-center space-x-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-3 rounded-2xl font-bold hover:scale-105 transition shadow-lg"
-      >
-        <FontAwesomeIcon icon={faUser} />
-        <span>Войти</span>
-      </button>
-    );
+  // Безопасное получение имени для приветствия
+  const getUserFirstName = () => {
+    if (!user?.name) return "";
+    return user.name.split(" ")[0];
   };
 
   return (
@@ -159,7 +130,8 @@ function Header() {
           </div>
 
           {/* ПРАВАЯ ЧАСТЬ — ДЕСКТОП */}
-          <div className="hidden lg:flex items-center space-x-8">
+          <div className="hidden lg:flex items-center space-x-6">
+            {/* Корзина */}
             <button onClick={() => navigate("/cart")} className="relative group" aria-label="Корзина">
               <FontAwesomeIcon icon={faShoppingCart} className="text-2xl text-gray-700 group-hover:text-indigo-600 transition" />
               {cartItemsCount > 0 && (
@@ -169,7 +141,43 @@ function Header() {
               )}
             </button>
 
-            <AuthSection />
+            {/* Авторизация + Профиль */}
+            {loading ? (
+              <div className="w-11 h-11 bg-gray-200 rounded-full animate-pulse" />
+            ) : user ? (
+              <div className="flex items-center space-x-4">
+                {/* Аватар */}
+                <button
+                  onClick={() => navigate("/profile")}
+                  className="w-11 h-11 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg hover:scale-110 transition"
+                  title="Личный кабинет"
+                >
+                  {getUserInitial()}
+                </button>
+
+                {/* Приветствие */}
+                <span className="text-gray-700 font-medium hidden xl:block">
+                  Привет, {getUserFirstName()}!
+                </span>
+
+                {/* Выход */}
+                <button
+                  onClick={logout}
+                  className="text-gray-600 hover:text-red-600 transition"
+                  title="Выйти"
+                >
+                  <FontAwesomeIcon icon={faSignOutAlt} className="text-xl" />
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => navigate("/auth")}
+                className="flex items-center space-x-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-3 rounded-2xl font-bold hover:scale-105 transition shadow-lg"
+              >
+                <FontAwesomeIcon icon={faUser} />
+                <span>Войти</span>
+              </button>
+            )}
           </div>
 
           {/* МОБИЛЬНАЯ КНОПКА */}
@@ -192,7 +200,7 @@ function Header() {
                 placeholder="Поиск замков..."
                 className="w-full px-5 py-4 pl-12 bg-gray-50 border border-gray-200 rounded-full text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-4 focus:ring-indigo-100"
               />
-              <FontAwesomeIcon icon={faSearch} className="absolute left-4 top-1/  -translate-y-1/2 text-gray-400 text-xl" />
+              <FontAwesomeIcon icon={faSearch} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xl" />
             </div>
 
             <div className="flex flex-col space-y-6 text-center">
@@ -200,13 +208,24 @@ function Header() {
                 <div className="h-10 bg-gray-200 rounded animate-pulse" />
               ) : user ? (
                 <>
-                  <p className="text-lg font-semibold text-gray-800">
-                    Привет, {user.name.split(" ")[0]}!
-                  </p>
-                  <button onClick={() => { navigate("/profile"); setIsMenuOpen(false); }} className="text-indigo-600 font-bold text-lg">
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="w-20 h-20 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-full flex items-center justify-center text-white text-3xl font-black shadow-lg">
+                      {getUserInitial()}
+                    </div>
+                    <p className="text-xl font-bold text-gray-800">
+                      Привет, {getUserFirstName()}!
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => { navigate("/profile"); setIsMenuOpen(false); }}
+                    className="text-indigo-600 font-bold text-lg"
+                  >
                     Личный кабинет
                   </button>
-                  <button onClick={() => { logout(); setIsMenuOpen(false); }} className="text-red-600 font-bold text-lg">
+                  <button
+                    onClick={() => { logout(); setIsMenuOpen(false); }}
+                    className="text-red-600 font-bold text-lg"
+                  >
                     Выйти
                   </button>
                 </>

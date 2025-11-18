@@ -1,54 +1,70 @@
 // src/context/AuthProvider.jsx
 import React, { useState, useEffect } from "react";
-import AuthContext from "./AuthContext";  // ← импортируем отсюда
 import axios from "axios";
+import AuthContext from "./AuthContext";
 
-const API_URL = "http://localhost:5000";
+// Создаём отдельный инстанс axios — это решает все проблемы с заголовками
+const api = axios.create({
+  baseURL: "http://localhost:5000",
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
+
+// Сразу ставим токен, если он есть
+const token = localStorage.getItem("token");
+if (token) {
+  api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+}
 
 export default function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-
-    const interceptor = axios.interceptors.request.use((config) => {
-      if (token) config.headers.Authorization = `Bearer ${token}`;
-      return config;
-    });
+    const checkAuth = async () => {
+      try {
+        const res = await api.get("/api/auth/me");
+        setUser(res.data.user || res.data);
+      } catch (error) {
+        console.log("Ошибка проверки токена:", error.message)
+        localStorage.removeItem("token");
+        delete api.defaults.headers.common["Authorization"];
+      } finally {
+        setLoading(false);
+      }
+    };
 
     if (token) {
-      axios
-        .get(`${API_URL}/api/auth/me`)
-        .then((res) => setUser(res.data.user))
-        .catch(() => localStorage.removeItem("token"))
-        .finally(() => setLoading(false));
+      checkAuth();
     } else {
       setLoading(false);
     }
-
-    return () => axios.interceptors.request.eject(interceptor);
   }, []);
 
   const login = async (email, password) => {
-    const { data } = await axios.post(`${API_URL}/api/auth/login`, { email, password });
+    const { data } = await api.post("/api/auth/login", { email, password });
     localStorage.setItem("token", data.token);
+    api.defaults.headers.common["Authorization"] = `Bearer ${data.token}`;
     setUser(data.user);
   };
 
   const register = async (userData) => {
-    const { data } = await axios.post(`${API_URL}/api/auth/register`, userData);
+    const { data } = await api.post("/api/auth/register", userData);
     localStorage.setItem("token", data.token);
+    api.defaults.headers.common["Authorization"] = `Bearer ${data.token}`;
     setUser(data.user);
   };
 
   const logout = () => {
     localStorage.removeItem("token");
+    delete api.defaults.headers.common["Authorization"];
     setUser(null);
   };
 
+  // Передаём api в контекст, если захочешь использовать в других местах
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, api }}>
       {children}
     </AuthContext.Provider>
   );

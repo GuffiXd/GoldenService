@@ -1,38 +1,90 @@
-// models/UserModel.js
-const { DataTypes } = require("sequelize");
+// back-end/models/UserModel.js
+const { Model, DataTypes } = require("sequelize");
 const sequelize = require("../config/db");
 
-const User = sequelize.define("User", {
-  id: {
-    type: DataTypes.INTEGER,
-    autoIncrement: true,
-    primaryKey: true,
+/**
+ * Модель пользователя системы
+ * Таблица: users
+ */
+class User extends Model {}
+
+/**
+ * Инициализация модели User
+ */
+User.init(
+  {
+    id: {
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+      autoIncrement: true,
+      allowNull: false,
+    },
+
+    name: {
+      type: DataTypes.STRING(100),
+      allowNull: false,
+      comment: "ФИО пользователя",
+      validate: {
+        len: [2, 100],
+      },
+    },
+
+    email: {
+      type: DataTypes.STRING(100),
+      allowNull: false,
+      unique: true,
+      validate: {
+        isEmail: { msg: "Некорректный email" },
+      },
+      comment: "Email — используется для входа",
+    },
+
+    phone: {
+      type: DataTypes.STRING(20),
+      allowNull: false,
+      comment: "Телефон в формате +7XXXXXXXXXX",
+      validate: {
+        is: /^\+?[0-9]{10,15}$/,
+      },
+    },
+
+    password: {
+      type: DataTypes.STRING(255),
+      allowNull: false,
+      comment: "Хэшированный пароль (bcrypt)",
+    },
+
+    role: {
+      type: DataTypes.ENUM("user", "admin"),
+      allowNull: false,
+      defaultValue: "user",
+      comment: "Роль: user — обычный пользователь, admin — администратор",
+    },
+
+    // Поля для мягкого удаления (paranoid)
+    deletedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
   },
-  name: {
-    type: DataTypes.STRING(100),
-    allowNull: false,
-  },
-  email: {
-    type: DataTypes.STRING(100),
-    allowNull: false,
-    unique: true,
-    validate: { isEmail: true },
-  },
-  phone: {
-    type: DataTypes.STRING(20),
-    allowNull: false,
-  },
-  password: {
-    type: DataTypes.STRING,
-    allowNull: false,
-  },
-  role: {
-    type: DataTypes.ENUM("user", "admin"),
-    defaultValue: "user",
-  },
-}, {
-  timestamps: true,
-  paranoid: true, // мягкое удаление
-});
+  {
+    sequelize,
+    modelName: "User",
+    tableName: "users",
+    timestamps: true,
+    paranoid: true,                    // мягкое удаление (deletedAt)
+    charset: "utf8mb4",
+    collate: "utf8mb4_unicode_ci",
+    indexes: [
+      { unique: true, fields: ["email"] },
+      { fields: ["phone"] },
+      { fields: ["role"] },
+    ],
+    hooks: {
+      // Опционально: можно добавить хэширование пароля здесь,
+      // но лучше делать в контроллере/сервисе перед create/update
+    },
+  }
+);
 
 module.exports = User;

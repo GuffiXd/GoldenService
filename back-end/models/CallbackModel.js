@@ -1,9 +1,15 @@
 // back-end/models/StatisticsModel.js
-const { DataTypes } = require("sequelize");
+const { Model, DataTypes } = require("sequelize");
 const sequelize = require("../config/db");
 
-const Callback = sequelize.define(
-  "Callback",
+/**
+ * Модель для статистики на главной странице
+ * Таблица: statistics
+ */
+class Statistics extends Model {}
+
+// Инициализация модели
+Statistics.init(
   {
     id: {
       type: DataTypes.INTEGER,
@@ -11,19 +17,26 @@ const Callback = sequelize.define(
       autoIncrement: true,
       allowNull: false,
     },
-    name: {
+    title: {
       type: DataTypes.STRING(100),
       allowNull: false,
+      comment: "Название показателя (например: 'Довольных клиентов')",
     },
-    email: {
-      type: DataTypes.STRING(100),
+    value: {
+      type: DataTypes.INTEGER,
       allowNull: false,
+      defaultValue: 0,
+      comment: "Числовое значение (например: 1250)",
     },
   },
   {
-    tableName: "callback",
-    timestamps: true,
+    sequelize,
+    modelName: "Statistics",     // Имя модели в коде
+    tableName: "statistics",     // Реальное имя таблицы в БД
+    timestamps: true,            // createdAt и updatedAt
+    charset: "utf8mb4",
+    collate: "utf8mb4_unicode_ci",
   }
 );
 
-module.exports = Callback;
+module.exports = Statistics;
