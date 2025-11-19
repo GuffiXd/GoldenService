@@ -17,7 +17,7 @@ export default function CatalogProducts() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ: теперь useEffect зависит от ВСЕГО location.search
+
   useEffect(() => {
     const fetchProducts = async () => {
       setLoading(true);
@@ -52,7 +52,7 @@ export default function CatalogProducts() {
     };
 
     fetchProducts();
-  }, [location.search]); // ЭТО ГЛАВНОЕ — теперь реагирует на ЛЮБОЕ изменение параметров
+  }, [location.search]);
 
   const goToPage = (page) => {
     if (page < 1 || page > pagination.pages) return;
@@ -64,7 +64,7 @@ export default function CatalogProducts() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  // Остальной код (скелетон, пустой результат и т.д.) — без изменений
+
   if (loading) {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 lg:gap-12">
@@ -156,7 +156,7 @@ export default function CatalogProducts() {
         ))}
       </div>
 
-      {/* Пагинация */}
+
       {pagination.pages > 1 && (
         <div className="flex flex-col items-center mt-16">
           <p className="text-gray-600 mb-6">

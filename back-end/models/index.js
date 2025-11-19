@@ -1,11 +1,11 @@
-// back-end/models/index.js
+
 const fs = require("fs");
 const path = require("path");
 const sequelize = require("../config/db");
 
 const db = {};
 
-// === Автозагрузка всех моделей из папки models ===
+
 fs.readdirSync(__dirname)
   .filter(file => {
     return (
@@ -107,10 +107,8 @@ if (db.Lock && db.Review) {
   });
 }
 
-// 5. Проекты и статистика — независимые, ассоциаций нет
-// OurProject, Statistics — ничего не связываем
 
-// === Экспорт ===
+
 db.sequelize = sequelize;
 db.Sequelize = require("sequelize");
 

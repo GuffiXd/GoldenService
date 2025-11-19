@@ -1,10 +1,10 @@
 // back-end/controllers/orderController.js
 const Lock = require("../models/LockModel");
-const Worders = require("../models/WholesaleModel"); // Исправлено: было WholesaleModel
+const Worders = require("../models/WholesaleModel"); 
 const { Op } = require("sequelize");
 
 const WholesaleController = {
-  // Поиск замков
+
   searchLocks: async (req, res) => {
     try {
       const { q } = req.query;
@@ -29,7 +29,7 @@ const WholesaleController = {
     }
   },
 
-  // Создание заказа
+
   createOrder: async (req, res) => {
     try {
       const {
@@ -43,7 +43,7 @@ const WholesaleController = {
         totalCost,
       } = req.body;
 
-      // Валидация
+
       if (!name || !phone || !lockId || !totalCost) {
         return res.status(400).json({ message: "Заполните обязательные поля" });
       }
@@ -67,5 +67,4 @@ const WholesaleController = {
   },
 };
 
-// Правильный экспорт
 module.exports = WholesaleController;

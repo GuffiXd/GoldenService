@@ -10,7 +10,7 @@ export default function Layout() {
       <Promocode />
       <Header />
       <main className="flex-1">
-        <Outlet /> {/* Здесь будут все страницы */}
+        <Outlet />
       </main>
       <Footer />
     </div>

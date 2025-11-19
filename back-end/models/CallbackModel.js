@@ -2,13 +2,10 @@
 const { Model, DataTypes } = require("sequelize");
 const sequelize = require("../config/db");
 
-/**
- * Модель для статистики на главной странице
- * Таблица: statistics
- */
+
 class Statistics extends Model {}
 
-// Инициализация модели
+
 Statistics.init(
   {
     id: {
@@ -31,9 +28,9 @@ Statistics.init(
   },
   {
     sequelize,
-    modelName: "Statistics",     // Имя модели в коде
-    tableName: "statistics",     // Реальное имя таблицы в БД
-    timestamps: true,            // createdAt и updatedAt
+    modelName: "Statistics",   
+    tableName: "statistics",   
+    timestamps: true,           
     charset: "utf8mb4",
     collate: "utf8mb4_unicode_ci",
   }

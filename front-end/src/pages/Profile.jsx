@@ -10,7 +10,7 @@ import Favorites from "../components/profile/Favorites";
 export default function Profile() {
   const location = useLocation();
 
-  // Если зашли просто на /profile — редиректим на /profile/info ОДИН РАЗ
+
   if (location.pathname === "/profile" || location.pathname === "/profile/") {
     return <Navigate to="/profile/info" replace />;
   }
@@ -22,7 +22,6 @@ export default function Profile() {
         <Route path="orders" element={<Orders />} />
         <Route path="addresses" element={<Addresses />} />
         <Route path="favorites" element={<Favorites />} />
-        {/* На всякий случай — если вдруг попали на неизвестный подмаршрут */}
         <Route path="*" element={<Navigate to="/profile/info" replace />} />
       </Routes>
     </ProfileLayout>

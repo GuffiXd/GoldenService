@@ -2,15 +2,10 @@
 const { Model, DataTypes } = require("sequelize");
 const sequelize = require("../config/db");
 
-/**
- * Модель категории замков
- * Таблица: categories
- */
+
 class Category extends Model {}
 
-/**
- * Инициализация модели Category
- */
+
 Category.init(
   {
     id: {
@@ -50,9 +45,9 @@ Category.init(
   },
   {
     sequelize,
-    modelName: "Category",          // имя модели в коде
-    tableName: "categories",        // имя таблицы в БД
-    timestamps: true,               // createdAt + updatedAt
+    modelName: "Category",    
+    tableName: "categories",     
+    timestamps: true,            
     charset: "utf8mb4",
     collate: "utf8mb4_unicode_ci",
     indexes: [
@@ -60,15 +55,7 @@ Category.init(
       { fields: ["name"] },
     ],
     hooks: {
-      // Автоматически генерируем slug из name, если не указан (по желанию можно включить)
-      // beforeValidate: (category) => {
-      //   if (!category.slug && category.name) {
-      //     category.slug = category.name
-      //       .toLowerCase()
-      //       .replace(/[^a-z0-9]+/g, "-")
-      //       .replace(/(^-|-$)/g, "");
-      //   }
-      // },
+
     },
   }
 );

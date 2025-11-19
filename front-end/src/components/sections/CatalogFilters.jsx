@@ -24,11 +24,11 @@ export default function CatalogFilters() {
       });
   }, []);
 
-  // Универсальная функция — клик по любому фильтру (снимает при повторном клике)
+
   const toggleFilter = (key, value) => {
     const newParams = new URLSearchParams(location.search);
 
-    // Если значение уже активно — снимаем его
+
     if (newParams.get(key) === value) {
       newParams.delete(key);
     } else {
@@ -39,7 +39,7 @@ export default function CatalogFilters() {
     navigate(`/catalog?${newParams.toString()}`);
   };
 
-  // Специально для ценовых диапазонов
+
   const setPriceRange = (min = "", max = "") => {
     const newParams = new URLSearchParams(location.search);
     newParams.delete("min_price");
@@ -52,14 +52,14 @@ export default function CatalogFilters() {
     navigate(`/catalog?${newParams.toString()}`);
   };
 
-  // Проверяем, активен ли ценовой диапазон
+
   const isPriceRangeActive = (min, max) => {
     return currentMinPrice === min && currentMaxPrice === max;
   };
 
   return (
     <div className="space-y-10">
-      {/* КАТЕГОРИИ — теперь с отменой при повторном клике */}
+
       <div>
         <h3 className="text-xl font-black text-gray-900 mb-6">Категории</h3>
         <div className="space-y-3">
@@ -85,7 +85,7 @@ export default function CatalogFilters() {
         </div>
       </div>
 
-      {/* ЦЕНА — теперь отмечается даже если товаров 0 */}
+
       <div>
         <h3 className="text-xl font-black text-gray-900 mb-6">Цена</h3>
         <div className="space-y-3">
@@ -110,10 +110,10 @@ export default function CatalogFilters() {
                   checked={active}
                   onChange={() => {
                     if (active) {
-                      // Если уже активно — снимаем фильтр
+
                       setPriceRange();
                     } else {
-                      // Применяем диапазон
+
                       setPriceRange(range.min, range.max);
                     }
                   }}

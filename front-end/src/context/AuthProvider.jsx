@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import AuthContext from "./AuthContext";
 
-// Создаём отдельный инстанс axios — это решает все проблемы с заголовками
+
 const api = axios.create({
   baseURL: "http://localhost:5000",
   headers: {
@@ -11,7 +11,7 @@ const api = axios.create({
   },
 });
 
-// Сразу ставим токен, если он есть
+
 const token = localStorage.getItem("token");
 if (token) {
   api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
@@ -62,7 +62,6 @@ export default function AuthProvider({ children }) {
     setUser(null);
   };
 
-  // Передаём api в контекст, если захочешь использовать в других местах
   return (
     <AuthContext.Provider value={{ user, loading, login, register, logout, api }}>
       {children}

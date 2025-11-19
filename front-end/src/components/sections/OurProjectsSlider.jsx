@@ -40,7 +40,6 @@ function OurProjectsSlider() {
 
   return (
     <section className="relative py-24 md:py-32 overflow-hidden bg-gradient-to-br from-indigo-50 via-white to-purple-50">
-      {/* Частицы */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         {[...Array(8)].map((_, i) => (
           <div
@@ -57,7 +56,6 @@ function OurProjectsSlider() {
       </div>
 
       <div className="relative max-w-7xl mx-auto px-6">
-        {/* Заголовок */}
         <Motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -75,9 +73,7 @@ function OurProjectsSlider() {
           <div className="w-32 h-1.5 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-full mx-auto mt-8" />
         </Motion.div>
 
-        {/* Обёртка слайдера + стрелки снаружи */}
         <div className="relative">
-          {/* Слайдер */}
           <Swiper
             modules={[Navigation, Pagination, Autoplay]}
             spaceBetween={50}
@@ -94,7 +90,6 @@ function OurProjectsSlider() {
             {projects.map((project, idx) => (
               <SwiperSlide key={project.id}>
                 <div className="grid lg:grid-cols-2 gap-12 xl:gap-20 items-center">
-                  {/* Фото */}
                   <Motion.div
                     initial={{ opacity: 0, x: -50 }}
                     whileInView={{ opacity: 1, x: 0 }}
@@ -120,7 +115,6 @@ function OurProjectsSlider() {
                     </div>
                   </Motion.div>
 
-                  {/* Текст */}
                   <Motion.div
                     initial={{ opacity: 0, x: 50 }}
                     whileInView={{ opacity: 1, x: 0 }}
@@ -162,15 +156,12 @@ function OurProjectsSlider() {
             ))}
           </Swiper>
 
-          {/* Стрелки — полностью снаружи слайдера */}
           <div className="swiper-button-prev-custom absolute left-[-80px] top-1/2 -translate-y-1/2 z-10 hidden lg:block">
             <ArrowLeft className="w-14 h-14 text-indigo-600 hover:text-indigo-800 transition-colors" />
           </div>
           <div className="swiper-button-next-custom absolute right-[-80px] top-1/2 -translate-y-1/2 z-10 hidden lg:block">
             <ArrowRight className="w-14 h-14 text-indigo-600 hover:text-indigo-800 transition-colors" />
           </div>
-
-          {/* На мобильных — стрелки не показываем (стандартные точки внизу) */}
         </div>
       </div>
     </section>

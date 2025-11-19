@@ -58,7 +58,7 @@ export default function CategoriesSection() {
               className="animate-fade-in"
               style={{ animationDelay: `${index * 100}ms` }}
             >
-              {/* ВОТ ГЛАВНОЕ ИЗМЕНЕНИЕ — теперь Link ведёт в каталог с параметром category */}
+
               <Link
                 to={`/catalog?category=${cat.id}`}
                 className="group block bg-white rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2"
@@ -83,7 +83,7 @@ export default function CategoriesSection() {
           ))}
         </div>
 
-        {/* Кнопка "Смотреть все" — ведёт в общий каталог без фильтра */}
+
         <div className="mt-16 text-center">
           <Link
             to="/catalog"

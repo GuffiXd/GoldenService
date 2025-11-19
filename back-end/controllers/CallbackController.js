@@ -1,6 +1,6 @@
 const Callback = require("../models/CallbackModel");
 
-// 📩 Создание новой заявки
+
 exports.createCallback = async (req, res) => {
   try {
     const { name, email } = req.body;
@@ -18,7 +18,7 @@ exports.createCallback = async (req, res) => {
   }
 };
 
-// 📋 Получение всех заявок
+
 exports.getAllCallbacks = async (req, res) => {
   try {
     const callbacks = await Callback.findAll({
@@ -31,7 +31,7 @@ exports.getAllCallbacks = async (req, res) => {
   }
 };
 
-// ❌ Удаление заявки (по id)
+
 exports.deleteCallback = async (req, res) => {
   try {
     const { id } = req.params;

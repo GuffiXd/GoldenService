@@ -2,15 +2,10 @@
 const { Model, DataTypes } = require("sequelize");
 const sequelize = require("../config/db");
 
-/**
- * Модель выполненного проекта (для раздела "Наши работы")
- * Таблица: our_projects
- */
+
 class OurProject extends Model {}
 
-/**
- * Инициализация модели OurProject
- */
+
 OurProject.init(
   {
     id: {
@@ -58,7 +53,7 @@ OurProject.init(
     charset: "utf8mb4",
     collate: "utf8mb4_unicode_ci",
     indexes: [
-      { fields: ["createdAt"] }, // для сортировки по дате
+      { fields: ["createdAt"] },
     ],
   }
 );

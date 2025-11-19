@@ -54,7 +54,11 @@ export default function Auth() {
       </div>
 
       {/* Плавные волны */}
-      <svg className="absolute bottom-0 left-0 w-full" viewBox="0 0 1440 320" preserveAspectRatio="none">
+      <svg
+        className="absolute bottom-0 left-0 w-full"
+        viewBox="0 0 1440 320"
+        preserveAspectRatio="none"
+      >
         <path
           fill="rgba(139, 92, 246, 0.1)"
           fillOpacity="0.3"
@@ -88,9 +92,10 @@ export default function Auth() {
       {/* Основная карточка */}
       <div className="relative z-10 min-h-screen flex items-center justify-center px-4 py-12">
         <div className="w-full max-w-md">
-          <div className="bg-white/10 backdrop-blur-2xl rounded-3xl shadow-2xl p-8 border border-white/20
-                          transform hover:scale-[1.02] transition-all duration-500">
-            
+          <div
+            className="bg-white/10 backdrop-blur-2xl rounded-3xl shadow-2xl p-8 border border-white/20
+                          transform hover:scale-[1.02] transition-all duration-500"
+          >
             <div className="text-center mb-10">
               <div className="inline-flex items-center space-x-3 mb-4">
                 <div className="w-16 h-16 bg-gradient-to-br from-cyan-400 to-purple-600 rounded-2xl flex items-center justify-center shadow-2xl animate-pulse">
@@ -101,7 +106,9 @@ export default function Auth() {
                 </h1>
               </div>
               <p className="text-2xl text-white/90 font-medium drop-shadow-lg">
-                {isLogin ? "Добро пожаловать назад!" : "Присоединяйтесь к будущему"}
+                {isLogin
+                  ? "Добро пожаловать назад!"
+                  : "Присоединяйтесь к будущему"}
               </p>
             </div>
 
@@ -123,7 +130,9 @@ export default function Auth() {
                     placeholder="Телефон"
                     required
                     value={form.phone}
-                    onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                    onChange={(e) =>
+                      setForm({ ...form, phone: e.target.value })
+                    }
                     className="w-full px-6 py-4 rounded-2xl bg-white/20 border border-white/30 text-white placeholder-white/60 
                                focus:outline-none focus:ring-4 focus:ring-cyan-500/50 focus:border-cyan-400 
                                transition-all text-lg backdrop-blur-xl"
@@ -161,7 +170,11 @@ export default function Auth() {
                            shadow-2xl disabled:opacity-70 disabled:cursor-not-allowed relative overflow-hidden group"
               >
                 <span className="relative z-10">
-                  {loading ? "Подождите..." : isLogin ? "Войти в аккаунт" : "Создать аккаунт"}
+                  {loading
+                    ? "Подождите..."
+                    : isLogin
+                    ? "Войти в аккаунт"
+                    : "Создать аккаунт"}
                 </span>
                 <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-full transition-transform duration-1000" />
               </button>
@@ -186,24 +199,31 @@ export default function Auth() {
         </div>
       </div>
 
-      {/* Кастомные анимации */}
-      <style jsx>{`
-        @keyframes wave {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-20px); }
-        }
-        @keyframes wave-delay {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-30px); }
-        }
-        @keyframes twinkle {
-          0%, 100% { opacity: 0; transform: scale(0); }
-          50% { opacity: 1; transform: scale(1); }
-        }
-        .animate-wave { animation: wave 20s ease-in-out infinite; }
-        .animate-wave-delay { animation: wave-delay 25s ease-in-out infinite; }
-        .animate-twinkle { animation: twinkle linear infinite; }
-      `}</style>
+      <style>
+        {`
+  @keyframes wave {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-20px); }
+  }
+  @keyframes wave-delay {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-30px); }
+  }
+  @keyframes twinkle {
+    0%, 100% { opacity: 0; transform: scale(0); }
+    50% { opacity: 1; transform: scale(1); }
+  }
+  .animate-wave {
+    animation: wave 20s ease-in-out infinite;
+  }
+  .animate-wave-delay {
+    animation: wave-delay 25s ease-in-out infinite;
+  }
+  .animate-twinkle {
+    animation: twinkle linear infinite;
+  }
+`}
+      </style>
     </div>
   );
 }

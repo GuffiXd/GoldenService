@@ -8,11 +8,11 @@ const statisticsController = {
         order: [["id", "ASC"]],
       });
 
-      // Если у тебя другие имена полей — адаптируй!
+
       const formatted = stats.map(s => ({
         id: s.id,
-        title: s.title || s.name,        // если у тебя `name`
-        value: Number(s.value || s.count), // если `count`
+        title: s.title || s.name,       
+        value: Number(s.value || s.count), 
       }));
 
       res.json(formatted);

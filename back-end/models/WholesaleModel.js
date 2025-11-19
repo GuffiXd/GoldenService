@@ -1,19 +1,11 @@
 // back-end/models/WholesaleOrderModel.js
-// ← ПЕРЕИМЕНУЙ ФАЙЛ НА ЭТО ИМЯ! (WholesaleOrderModel.js)
 
 const { Model, DataTypes } = require("sequelize");
 const sequelize = require("../config/db");
 
-/**
- * Модель оптового заказа (форма "Заказать оптом")
- * Это НЕ обычный заказ пользователя!
- * Таблица: wholesale_orders
- */
 class WholesaleOrder extends Model {}
 
-/**
- * Инициализация модели WholesaleOrder
- */
+
 WholesaleOrder.init(
   {
     id: {
@@ -86,8 +78,8 @@ WholesaleOrder.init(
   },
   {
     sequelize,
-    modelName: "WholesaleOrder",      // ← правильное имя модели
-    tableName: "wholesale_orders",    // ← правильное имя таблицы!
+    modelName: "WholesaleOrder",  
+    tableName: "wholesale_orders", 
     timestamps: true,
     charset: "utf8mb4",
     collate: "utf8mb4_unicode_ci",

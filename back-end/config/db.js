@@ -2,7 +2,6 @@
 require('dotenv').config();
 const { Sequelize } = require('sequelize');
 
-// Создаём экземпляр Sequelize
 const sequelize = new Sequelize(
   process.env.DB_NAME,
   process.env.DB_USER,
@@ -20,5 +19,4 @@ const sequelize = new Sequelize(
   }
 );
 
-// Экспортируем ТОЛЬКО экземпляр
 module.exports = sequelize;

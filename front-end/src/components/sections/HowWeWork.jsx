@@ -77,7 +77,7 @@ function HowWeWork() {
             >
               {/* 3D-карточка */}
               <div className="relative bg-white rounded-3xl shadow-xl overflow-hidden transform transition-all duration-500 group-hover:-translate-y-4 group-hover:shadow-2xl">
-                {/* Градиентный оверлей при ховере */}
+
                 
                 {/* Изображение */}
                 <div className="relative h-64 md:h-80 overflow-hidden">
@@ -111,7 +111,7 @@ function HowWeWork() {
           ))}
         </div>
 
-        {/* Мобильная последовательность (точки) */}
+
         <div className="flex justify-center mt-12 md:hidden">
           <div className="flex items-center gap-4">
             {steps.map((_, i) => (

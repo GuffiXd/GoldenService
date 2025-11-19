@@ -5,14 +5,13 @@ const helmet = require("helmet");
 const dotenv = require("dotenv");
 const path = require("path");
 
-// ==================== КОНФИГ ====================
+//КОНФИГ
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// ==================== ПОДКЛЮЧЕНИЕ БД И МОДЕЛЕЙ ====================
-// Это автоматически загрузит ВСЕ модели и настроит ассоциации
+//ПОДКЛЮЧЕНИЕ БД И МОДЕЛЕЙ
 require("./models");
 const { sequelize } = require("./models");
 const seedDatabase = require("./seedDatabase");
@@ -27,7 +26,7 @@ const wholesaleRoutes = require("./routes/WholesaleRoutes");
 const authRoutes = require("./routes/AuthRoutes");
 const orderRoutes = require("./routes/OrdersRoutes");
 
-// ==================== МИДЛВАРЫ ====================
+//МИДЛВАРЫ
 app.use(
   cors({
     origin: ["http://localhost:5173", "http://127.0.0.1:5173"],
@@ -38,17 +37,17 @@ app.use(
 app.use(
   helmet({
     crossOriginResourcePolicy: { policy: "cross-origin" },
-    contentSecurityPolicy: false, // Отключаем для Vite
+    contentSecurityPolicy: false,
   })
 );
 
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
-// Статические файлы (картинки)
+// Статические файлы
 app.use("/images", express.static(path.join(__dirname, "images")));
 
-// ==================== API РОУТЫ ====================
+//API РОУТЫ
 app.use("/api/locks", lockRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/statistics", statisticsRoutes);
@@ -58,7 +57,7 @@ app.use("/api/wholesale", wholesaleRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/orders", orderRoutes);
 
-// ==================== ГЛАВНАЯ СТРАНИЦА API ====================
+//ГЛАВНАЯ СТРАНИЦА API
 app.get("/", (req, res) => {
   res.json({
     message: "Golden Soft API",
@@ -79,7 +78,7 @@ app.get("/", (req, res) => {
   });
 });
 
-// ==================== 404 ====================
+//404
 app.use((req, res) => {
   res.status(404).json({
     success: false,
@@ -87,7 +86,7 @@ app.use((req, res) => {
   });
 });
 
-// ==================== ГЛОБАЛЬНЫЙ ОБРАБОТЧИК ОШИБОК ====================
+//ГЛОБАЛЬНЫЙ ОБРАБОТЧИК ОШИБОК
 app.use((err, req, res, next) => {
   console.error("Ошибка сервера:", err);
 
@@ -101,7 +100,7 @@ app.use((err, req, res, next) => {
   });
 });
 
-// ==================== ЗАПУСК СЕРВЕРА ====================
+//ЗАПУСК СЕРВЕРА
 const startServer = async () => {
   try {
     console.log("Подключение к MySQL...");
@@ -109,13 +108,13 @@ const startServer = async () => {
     await sequelize.authenticate();
     console.log("MySQL успешно подключён");
 
-    // === Синхронизация только в development ===
+    
     if (process.env.NODE_ENV !== "production") {
       console.log("Синхронизация моделей с БД (dev-режим)...");
-      await sequelize.sync({ alter: true }); // alter — безопасно обновляет схему
+      await sequelize.sync({ alter: true });
       console.log("Схема БД синхронизирована");
 
-      // Запуск сида только если таблица locks пуста
+
       const lockCount = await sequelize.models.Lock?.count();
       if (lockCount === 0 || lockCount === undefined) {
         console.log("База пустая — запускаем сид...");
@@ -128,7 +127,7 @@ const startServer = async () => {
       console.log("Production режим — sync и сид отключены");
     }
 
-    // === Запуск сервера ===
+
     app.listen(PORT, "0.0.0.0", () => {
       console.log("\nСервер успешно запущен!");
       console.log(`http://localhost:${PORT}`);
@@ -140,5 +139,4 @@ const startServer = async () => {
   }
 };
 
-// ==================== СТАРТ ====================
 startServer();

@@ -277,28 +277,6 @@ function Footer() {
                 </MapContainer>
               </div>
             </div>
-
-            {/* Информация */}
-            <div>
-              <h3 className="font-bold text-lg mb-5 text-indigo-400">Информация</h3>
-              <ul className="space-y-3 text-gray-400">
-                <li>
-                  <Link to="/delivery" className="hover:text-white transition-colors duration-300">
-                    Доставка
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/warranty" className="hover:text-white transition-colors duration-300">
-                    Гарантия
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/return" className="hover:text-white transition-colors duration-300">
-                    Возврат
-                  </Link>
-                </li>
-              </ul>
-            </div>
           </div>
 
           {/* Копирайт */}

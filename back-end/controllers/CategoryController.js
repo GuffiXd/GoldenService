@@ -14,7 +14,6 @@ const categoryController = {
     }
   },
 
-  // САМЫЙ НАДЁЖНЫЙ СПОСОБ — ЧИСТЫЙ SQL (НИКАКИХ АССОЦИАЦИЙ!)
   getCategoriesWithCount: async (req, res) => {
     try {
       const [results] = await sequelize.query(`
@@ -48,7 +47,7 @@ const categoryController = {
       const { slug } = req.params;
       const category = await Category.findOne({
         where: { slug },
-        include: [{ model: Lock, as: "locks" }], // ← теперь везде "locks"
+        include: [{ model: Lock, as: "locks" }],
       });
       if (!category) return res.status(404).json({ error: "Категория не найдена" });
       res.json(category);

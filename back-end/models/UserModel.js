@@ -2,15 +2,9 @@
 const { Model, DataTypes } = require("sequelize");
 const sequelize = require("../config/db");
 
-/**
- * Модель пользователя системы
- * Таблица: users
- */
 class User extends Model {}
 
-/**
- * Инициализация модели User
- */
+
 User.init(
   {
     id: {
@@ -61,7 +55,7 @@ User.init(
       comment: "Роль: user — обычный пользователь, admin — администратор",
     },
 
-    // Поля для мягкого удаления (paranoid)
+
     deletedAt: {
       type: DataTypes.DATE,
       allowNull: true,
@@ -72,7 +66,7 @@ User.init(
     modelName: "User",
     tableName: "users",
     timestamps: true,
-    paranoid: true,                    // мягкое удаление (deletedAt)
+    paranoid: true,    
     charset: "utf8mb4",
     collate: "utf8mb4_unicode_ci",
     indexes: [
@@ -81,8 +75,7 @@ User.init(
       { fields: ["role"] },
     ],
     hooks: {
-      // Опционально: можно добавить хэширование пароля здесь,
-      // но лучше делать в контроллере/сервисе перед create/update
+  
     },
   }
 );

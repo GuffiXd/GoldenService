@@ -13,6 +13,6 @@ function Wholesale() {
       <OurProjectsSlider />
     </div>
   );
-}
+} 
 
 export default Wholesale;

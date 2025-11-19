@@ -1,29 +1,52 @@
 // back-end/seedDatabase.js
 const Lock = require("./models/LockModel");
 const Category = require("./models/CategoryModel");
+const User = require("./models/UserModel");
+const Order = require("./models/OrderModel");
+const OrderItem = require("./models/OrderItemModel");
+const Review = require("./models/ReviewModel");
 const Statistics = require("./models/StatisticsModel");
 const OurProject = require("./models/OurProjectModel");
+
+// Пул фото
+const imagePool = [
+  "/images/products/closet-lock.webp",
+  "/images/products/flat-lock.webp",
+  "/images/products/home-lock.webp",
+  "/images/products/hotel-lock.webp",
+  "/images/products/mortise-lock.webp",
+  "/images/products/office-lock.webp",
+  "/images/products/rim-lock.webp",
+  "/images/products/rooms-lock.webp",
+];
+
+let imgIndex = 0;
+const getNextImage = () => imagePool[imgIndex++ % imagePool.length];
+
+// Функция: 1 основное фото + 3 таких же в галерее
+const withFourSameImages = () => {
+  const img = getNextImage();
+  return { 
+    image_path: img, 
+    image_gallery: JSON.stringify([img, img, img, img])  // 4 штуки
+  };
+};
 
 async function seedDatabase() {
   console.log("СИД ЗАПУЩЕН!");
 
   try {
-    // Проверка, есть ли уже данные
-    const [lockCount, catCount, projectCount, statCount] = await Promise.all([
+    // ───── Проверка, есть ли уже данные ─────
+    const [lockCount, catCount] = await Promise.all([
       Lock.count(),
       Category.count(),
-      OurProject.count(),
-      Statistics.count(),
     ]);
-
-    if (lockCount > 0 || catCount > 0 || projectCount > 0 || statCount > 0) {
-      console.log("БД уже содержит данные. Пропускаем сид...");
+    if (lockCount > 0 || catCount > 0) {
+      console.log("БД уже заполнена — пропускаем");
       return;
     }
 
-    console.log("Начинаем заполнение БД...");
-
-    // 1. Категории
+    // ───── 1. Категории ─────
     const categories = await Category.bulkCreate(
       [
         {
@@ -69,33 +92,10 @@ async function seedDatabase() {
       ],
       { returning: true }
     );
+    console.log("Категории добавлены");
 
-    console.log("8 категорий добавлено");
-
-    // Пул фото
-    const imagePool = [
-      "/images/products/closet-lock.webp",
-      "/images/products/flat-lock.webp",
-      "/images/products/home-lock.webp",
-      "/images/products/hotel-lock.webp",
-      "/images/products/mortise-lock.webp",
-      "/images/products/office-lock.webp",
-      "/images/products/rim-lock.webp",
-      "/images/products/rooms-lock.webp",
-    ];
-
-    let imgIndex = 0;
-    const getNextImage = () => imagePool[imgIndex++ % imagePool.length];
-
-    // Функция, которая делает 1 основную + 3 одинаковых в галерее
-    const withFourSameImages = () => {
-      const img = getNextImage();
-      return { image_path: img, image_gallery: [img, img, img] };
-    };
-
-    // 2. Все 32 замка — с 4 одинаковыми фото
+    // ───── 2. Замки (32 шт) ─────
     const locks = [
-      // Накладные (0-3)
       {
         ...withFourSameImages(),
         name: "Накладной замок Golden Soft Pro для квартиры",
@@ -760,9 +760,229 @@ async function seedDatabase() {
     ];
 
     await Lock.bulkCreate(locks);
-    console.log("32 замка добавлено — у каждого 4 одинаковых фото!");
+    console.log("32 замка добавлено");
 
-    // Проекты и статистика
+    // ───── 3. Пользователи (если их нет) ─────
+    const usersExist = await User.count();
+    if (usersExist === 0) {
+      await User.bulkCreate([
+        {
+          name: "Иван Иванов",
+          email: "ivan@example.com",
+          phone: "+79001234567",
+          password: "hashedpass",
+          role: "user",
+        },
+        {
+          name: "Мария Петрова",
+          email: "maria@example.com",
+          phone: "+79001234568",
+          password: "hashedpass",
+          role: "user",
+        },
+        {
+          name: "Алексей Смирнов",
+          email: "alex@example.com",
+          phone: "+79001234569",
+          password: "hashedpass",
+          role: "user",
+        },
+        {
+          name: "Елена Кузнецова",
+          email: "elena@example.com",
+          phone: "+79001234570",
+          password: "hashedpass",
+          role: "user",
+        },
+        {
+          name: "Дмитрий Васильев",
+          email: "dmitry@example.com",
+          phone: "+79001234571",
+          password: "hashedpass",
+          role: "user",
+        },
+        {
+          name: "Ольга Морозова",
+          email: "olga@example.com",
+          phone: "+79001234572",
+          password: "hashedpass",
+          role: "user",
+        },
+        {
+          name: "Сергей Новиков",
+          email: "sergey@example.com",
+          phone: "+79001234573",
+          password: "hashedpass",
+          role: "user",
+        },
+        {
+          name: "Анна Лебедева",
+          email: "anna@example.com",
+          phone: "+79001234574",
+          password: "hashedpass",
+          role: "user",
+        },
+        {
+          name: "Павел Соколов",
+          email: "pavel@example.com",
+          phone: "+79001234575",
+          password: "hashedpass",
+          role: "user",
+        },
+        {
+          name: "Татьяна Федорова",
+          email: "tanya@example.com",
+          phone: "+79001234576",
+          password: "hashedpass",
+          role: "user",
+        },
+      ]);
+      console.log("Пользователи добавлены");
+    }
+    // ───── 4. Заказы + OrderItem (надёжно, без дубликатов замков в заказе) ─────
+    // ───── 4. Заказы + OrderItem (финальная версия под твою модель) ─────
+    const allUsers = await User.findAll({ where: { role: "user" } });
+    const allLocks = await Lock.findAll();
+
+    const statuses = [
+      "новый",
+      "в процессе",
+      "в обработке",
+      "завершен",
+      "отменен",
+    ];
+    const paymentMethods = ["Карта онлайн", "СБП", "При получении"];
+
+    const existingOrders = await Order.count();
+    if (existingOrders >= 25) {
+      console.log("Заказы уже созданы — пропускаем");
+    } else {
+      for (let i = 0; i < 25; i++) {
+        const user = allUsers[Math.floor(Math.random() * allUsers.length)];
+        let totalPrice = 0;
+
+        const order = await Order.create({
+          userId: user.id,
+          status: statuses[Math.floor(Math.random() * statuses.length)],
+          payment_method:
+            paymentMethods[Math.floor(Math.random() * paymentMethods.length)],
+          total_price: 0,
+          address: `г. Москва, ул. Ленина, д. ${20 + i}, кв. ${
+            Math.floor(Math.random() * 300) + 1
+          }`,
+          city: "Москва",
+          postcode: "101000",
+          country: "Россия",
+          comment: Math.random() > 0.7 ? "Позвонить за час до доставки" : null,
+        });
+
+        const usedLockIds = new Set();
+        const itemsCount = Math.floor(Math.random() * 4) + 1; // 1–4 разных товара
+
+        for (let j = 0; j < itemsCount; j++) {
+          let lock;
+          do {
+            lock = allLocks[Math.floor(Math.random() * allLocks.length)];
+          } while (usedLockIds.has(lock.id));
+          usedLockIds.add(lock.id);
+
+          const quantity = Math.floor(Math.random() * 3) + 1;
+          const price = lock.price_with_discount || lock.price;
+          totalPrice += price * quantity;
+
+          await OrderItem.create({
+            orderId: order.id,
+            lockId: lock.id,
+            quantity,
+            price_at_purchase: price,
+          });
+        }
+
+        await order.update({ total_price: totalPrice });
+      }
+      console.log("25 заказов успешно создано!");
+    }
+
+    // ───── 5. Отзывы ─────
+    const reviewAuthors = [
+      "Алексей К.",
+      "Мария С.",
+      "Дмитрий П.",
+      "Елена В.",
+      "Сергей М.",
+      "Ольга Н.",
+      "Павел Т.",
+      "Анна Р.",
+      "Игорь Ф.",
+      "Татьяна Л.",
+      "Виктор З.",
+      "Наталья Г.",
+      "Роман Д.",
+      "Светлана Б.",
+      "Михаил Ю.",
+    ];
+    const positiveTexts = [
+      "Отличный замок! Работает идеально, установка заняла 15 минут.",
+      "Рекомендую всем! Биометрия срабатывает мгновенно.",
+      "Качество на высоте, выглядит очень надёжно.",
+      "Доставили быстро, всё работает как часы.",
+      "Лучший замок из всех, что у меня были. Спасибо GoldenSoft!",
+      "Удобное приложение, можно открывать с телефона — магия!",
+      "Супер! Теперь не ношу ключи вообще.",
+      "Очень доволен покупкой, уже поставил второй на дачу.",
+    ];
+    const neutralTexts = [
+      "Всё хорошо, но инструкция могла бы быть подробнее.",
+      "Работает нормально, но иногда нужно поднести палец два раза.",
+      "Нормальный замок за свои деньги.",
+      "Поставил сам, но пришлось повозиться с выравниванием.",
+      "В целом доволен, но батарейки садятся быстрее, чем ожидал.",
+    ];
+
+    const reviewPromises = [];
+
+    for (const lock of allLocks) {
+      const reviewsCount = Math.floor(Math.random() * 4) + 3; // 3–6 отзывов
+
+      for (let i = 0; i < reviewsCount; i++) {
+        const rating = Math.random() > 0.15 ? 5 : 4;
+        const author =
+          reviewAuthors[Math.floor(Math.random() * reviewAuthors.length)];
+        const text =
+          rating === 5
+            ? positiveTexts[Math.floor(Math.random() * positiveTexts.length)]
+            : neutralTexts[Math.floor(Math.random() * neutralTexts.length)];
+
+        const daysAgo = Math.floor(Math.random() * 180);
+        const date = new Date();
+        date.setDate(date.getDate() - daysAgo);
+
+        reviewPromises.push(
+          Review.create({
+            lockId: lock.id,
+            author,
+            rating,
+            text,
+            createdAt: date,
+            updatedAt: date,
+            isVerified: Math.random() > 0.3,
+          })
+        );
+      }
+    }
+
+    await Promise.all(reviewPromises);
+    console.log(`Добавлено ${reviewPromises.length} отзывов`);
+
+    // ───── 6. Статистика ─────
+    await Statistics.bulkCreate([
+      { title: "Счастливых клиентов", value: 5567 },
+      { title: "Продуктов на выбор", value: 1245 },
+      { title: "Продаж в день", value: 372 },
+      { title: "Лет на рынке", value: 20 },
+    ]);
+
+    // ───── 7. Проекты (OurProject) ─────
     await OurProject.bulkCreate([
       {
         title: "Проект для гостиницы Radisson Hotels",
@@ -788,13 +1008,6 @@ async function seedDatabase() {
           "• 150 шкафчиков с RFID-замками\n• Брендирование логотипом\n• Гарантия 3 года",
         budget: "$1800",
       },
-    ]);
-
-    await Statistics.bulkCreate([
-      { title: "Счастливых клиентов", value: 5567 },
-      { title: "Продуктов на выбор", value: 1245 },
-      { title: "Продаж в день", value: 372 },
-      { title: "Лет на рынке", value: 20 },
     ]);
 
     console.log("БД УСПЕШНО ЗАПОЛНЕНА!");

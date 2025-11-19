@@ -2,16 +2,9 @@
 const { Model, DataTypes } = require("sequelize");
 const sequelize = require("../config/db");
 
-/**
- * Модель для блока статистики на главной странице
- * (например: "1250+ довольных клиентов", "15 лет на рынке" и т.д.)
- * Таблица: statistics
- */
 class Statistics extends Model {}
 
-/**
- * Инициализация модели Statistics
- */
+
 Statistics.init(
   {
     id: {
@@ -42,7 +35,7 @@ Statistics.init(
     charset: "utf8mb4",
     collate: "utf8mb4_unicode_ci",
     indexes: [
-      { fields: ["id"] }, // по умолчанию, но явно — для порядка
+      { fields: ["id"] },
     ],
     comment: "Статистика для главной страницы — 4 блока с анимированными цифрами",
   }

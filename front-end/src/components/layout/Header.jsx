@@ -23,9 +23,9 @@ function Header() {
   const navigate = useNavigate();
   const { user, logout, loading } = useAuth();
 
-  const cartItemsCount = 0; // потом подключишь useCart()
+  const cartItemsCount = 0;
 
-  // Debounced поиск
+
   const debouncedSearch = useRef(
     debounce((query) => {
       if (!query?.trim() || query.trim().length < 2) {
@@ -57,13 +57,13 @@ function Header() {
     navigate(`/product/${lock.id}`);
   };
 
-  // Безопасное получение первой буквы имени
+
   const getUserInitial = () => {
     if (!user?.name) return "?";
     return user.name.trim().charAt(0).toUpperCase();
   };
 
-  // Безопасное получение имени для приветствия
+
   const getUserFirstName = () => {
     if (!user?.name) return "";
     return user.name.split(" ")[0];

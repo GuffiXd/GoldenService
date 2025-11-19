@@ -2,15 +2,9 @@
 const { Model, DataTypes } = require("sequelize");
 const sequelize = require("../config/db");
 
-/**
- * Модель заказа пользователя
- * Таблица: orders
- */
 class Order extends Model {}
 
-/**
- * Инициализация модели Order
- */
+
 Order.init(
   {
     id: {
@@ -31,9 +25,9 @@ Order.init(
     },
 
     status: {
-      type: DataTypes.ENUM("new", "processing", "shipped", "completed", "canceled"),
+      type: DataTypes.ENUM("новый", "в процессе", "в обработке", "завершен", "отменен"),
       allowNull: false,
-      defaultValue: "new",
+      defaultValue: "новый",
       comment: "Статус заказа",
     },
 
@@ -49,7 +43,7 @@ Order.init(
       comment: "Комментарий к заказу",
     },
 
-    // Адрес доставки
+
     address: { type: DataTypes.STRING(255), allowNull: true },
     city: { type: DataTypes.STRING(100), allowNull: true },
     postcode: { type: DataTypes.STRING(20), allowNull: true },

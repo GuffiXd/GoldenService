@@ -2,15 +2,8 @@
 const { Model, DataTypes } = require("sequelize");
 const sequelize = require("../config/db");
 
-/**
- * Модель электронного замка
- * Таблица: locks
- */
 class Lock extends Model {}
 
-/**
- * Инициализация модели Lock
- */
 Lock.init(
   {
     id: {
@@ -123,8 +116,8 @@ Lock.init(
   },
   {
     sequelize,
-    modelName: "Lock",           // Имя модели в коде
-    tableName: "locks",          // Имя таблицы в БД
+    modelName: "Lock",     
+    tableName: "locks",  
     timestamps: true,
     charset: "utf8mb4",
     collate: "utf8mb4_unicode_ci",

@@ -1,18 +1,28 @@
 // src/components/sections/ProductSection.jsx
 import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import { Heart, ShoppingCart, Check, Shield, Clock, Star, Truck, Sparkles, User } from "lucide-react";
+import {
+  Heart,
+  ShoppingCart,
+  Check,
+  Shield,
+  Clock,
+  Star,
+  Truck,
+  Sparkles,
+  User,
+} from "lucide-react";
 
 const API_URL = "http://localhost:5000";
 
-// Безопасное форматирование цены
+// Форматирование цены
 const formatPrice = (value) => {
-  if (value === null || value === undefined || value === "") return "—";
+  if (!value) return "—";
   const num = Number(value);
   return isNaN(num) ? "—" : num.toLocaleString("ru-RU");
 };
 
-// Форматирование даты отзыва: "15 марта 2025"
+// Дата отзыва
 const formatReviewDate = (dateString) => {
   const date = new Date(dateString);
   return date.toLocaleDateString("ru-RU", {
@@ -22,19 +32,19 @@ const formatReviewDate = (dateString) => {
   });
 };
 
-// Компонент одной звёздочки (для рейтинга)
-const StarRating = ({ rating }) => {
-  return (
-    <div className="flex">
-      {[...Array(5)].map((_, i) => (
-        <Star
-          key={i}
-          className={`w-5 h-5 ${i < rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`}
-        />
-      ))}
-    </div>
-  );
-};
+// Звёздочки рейтинга
+const StarRating = ({ rating }) => (
+  <div className="flex">
+    {[...Array(5)].map((_, i) => (
+      <Star
+        key={i}
+        className={`w-5 h-5 ${
+          i < rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
+        }`}
+      />
+    ))}
+  </div>
+);
 
 export default function ProductSection() {
   const { id } = useParams();
@@ -72,33 +82,64 @@ export default function ProductSection() {
     return (
       <div className="py-32 text-center">
         <p className="text-3xl font-bold text-gray-800 mb-6">Товар не найден</p>
-        <Link to="/catalog" className="inline-flex items-center gap-2 text-indigo-600 hover:underline">
+        <Link
+          to="/catalog"
+          className="inline-flex items-center gap-2 text-indigo-600 hover:underline"
+        >
           ← Вернуться в каталог
         </Link>
       </div>
     );
   }
 
-  const currentPrice = Number(product.price_with_discount) || Number(product.price) || 0;
+  const currentPrice =
+    Number(product.price_with_discount) || Number(product.price) || 0;
   const oldPrice = product.price_with_discount ? Number(product.price) : null;
   const totalPrice = currentPrice * quantity;
+  const reviews = product.reviews || [];
 
-  const allImages = [product.image_path, ...(product.image_gallery || [])];
-  const reviews = product.reviews || []; // ← Вот они, настоящие отзывы!
+  // ГАЛЕРЕЯ — 100% РАБОЧАЯ И КРАСИВАЯ
+  const parseGallery = () => {
+    if (!product.image_gallery) return [];
+    try {
+      const parsed = JSON.parse(product.image_gallery);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (e) {
+      console.warn("Ошибка парсинга image_gallery:", e);
+      return [];
+    }
+  };
+
+  const galleryImages = parseGallery();
+  const mainImage = product.image_path;
+  const allGalleryImages = [mainImage, ...galleryImages.slice(0, 3)]; // максимум 4 фото
+  const thumbnails =
+    allGalleryImages.length >= 4
+      ? allGalleryImages
+      : [
+          ...allGalleryImages,
+          ...Array(4 - allGalleryImages.length).fill(mainImage),
+        ];
 
   return (
     <section className="py-12 md:py-20 bg-gradient-to-b from-indigo-50 via-white to-purple-50 min-h-screen">
       <div className="max-w-7xl mx-auto px-6">
-
         {/* Хлебные крошки */}
         <nav className="text-sm text-gray-600 mb-8 flex items-center gap-2 flex-wrap">
-          <Link to="/" className="hover:text-indigo-600 transition">Главная</Link>
+          <Link to="/" className="hover:text-indigo-600 transition">
+            Главная
+          </Link>
           <span>→</span>
-          <Link to="/catalog" className="hover:text-indigo-600 transition">Каталог</Link>
+          <Link to="/catalog" className="hover:text-indigo-600 transition">
+            Каталог
+          </Link>
           {product.category && (
             <>
               <span>→</span>
-              <Link to={`/catalog?category=${product.category.slug}`} className="hover:text-indigo-600 transition">
+              <Link
+                to={`/catalog?category=${product.category.slug}`}
+                className="hover:text-indigo-600 transition"
+              >
                 {product.category.name}
               </Link>
             </>
@@ -108,39 +149,47 @@ export default function ProductSection() {
         </nav>
 
         <div className="grid lg:grid-cols-2 gap-12 xl:gap-20">
-
           {/* Левая часть — фото */}
           <div className="space-y-6">
+            {/* Главное фото */}
             <div className="relative group">
               <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/20 to-purple-600/20 rounded-3xl blur-3xl opacity-70 group-hover:opacity-100 transition-opacity duration-700 -z-10"></div>
               <img
-                src={`${API_URL}${allImages[selectedImage]}`}
+                src={`${API_URL}${thumbnails[selectedImage]}`}
                 alt={product.name}
                 className="w-full h-[500px] md:h-[650px] object-contain rounded-3xl shadow-2xl bg-gradient-to-br from-indigo-50/50 to-purple-50/30 p-8 transition-all duration-500 hover:scale-[1.02]"
               />
               <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-md px-4 py-2 rounded-full shadow-lg flex items-center gap-2">
                 <Sparkles className="w-5 h-5 text-indigo-600" />
-                <span className="text-sm font-bold text-indigo-600">Новинка 2025</span>
+                <span className="text-sm font-bold text-indigo-600">
+                  Новинка 2025
+                </span>
               </div>
             </div>
 
-            {allImages.length > 1 && (
-              <div className="grid grid-cols-5 gap-4">
-                {allImages.map((img, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setSelectedImage(i)}
-                    className={`rounded-2xl overflow-hidden border-4 transition-all ${
-                      selectedImage === i
-                        ? "border-indigo-600 shadow-lg scale-105"
-                        : "border-transparent hover:border-indigo-300"
-                    }`}
-                  >
-                    <img src={`${API_URL}${img}`} alt="" className="w-full h-24 object-cover" />
-                  </button>
-                ))}
-              </div>
-            )}
+            {/* Миниатюры — всегда 4 */}
+            <div className="grid grid-cols-4 gap-4">
+              {thumbnails.map((img, i) => (
+                <button
+                  key={i}
+                  onClick={() => setSelectedImage(i)}
+                  className={`relative rounded-2xl overflow-hidden border-4 transition-all duration-300 shadow-md hover:shadow-xl ${
+                    selectedImage === i
+                      ? "border-indigo-600 ring-4 ring-indigo-600/30 scale-105"
+                      : "border-gray-200 hover:border-indigo-400"
+                  }`}
+                >
+                  <img
+                    src={`${API_URL}${img}`}
+                    alt={`${product.name} — фото ${i + 1}`}
+                    className="w-full h-32 object-cover"
+                  />
+                  {selectedImage === i && (
+                    <div className="absolute inset-0 bg-indigo-600/20 pointer-events-none"></div>
+                  )}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Правая часть — информация */}
@@ -149,49 +198,58 @@ export default function ProductSection() {
               <h1 className="text-4xl md:text-5xl font-black text-gray-900 leading-tight">
                 {product.name}
               </h1>
-              <p className="text-xl text-gray-600 mt-3">Артикул: {product.article}</p>
+              <p className="text-xl text-gray-600 mt-3">
+                Артикул: {product.article}
+              </p>
 
-              {/* Рейтинг из отзывов */}
               {reviews.length > 0 && (
                 <div className="flex items-center gap-6 mt-6">
-                  <StarRating rating={Math.round(reviews.reduce((a, r) => a + r.rating, 0) / reviews.length)} />
+                  <StarRating
+                    rating={Math.round(
+                      reviews.reduce((a, r) => a + r.rating, 0) / reviews.length
+                    )}
+                  />
                   <span className="text-lg font-bold text-gray-700">
-                    {reviews.length > 0
-                      ? (reviews.reduce((a, r) => a + r.rating, 0) / reviews.length).toFixed(1)
-                      : "—"}
+                    {(
+                      reviews.reduce((a, r) => a + r.rating, 0) / reviews.length
+                    ).toFixed(1)}
                   </span>
-                  <span className="text-gray-600">({reviews.length} отзывов)</span>
+                  <span className="text-gray-600">
+                    ({reviews.length} отзывов)
+                  </span>
                 </div>
               )}
             </div>
 
-            {/* Цена */}
             <div className="flex items-baseline gap-6">
               <span className="text-6xl font-black text-indigo-600">
                 {formatPrice(currentPrice)} ₽
               </span>
               {oldPrice && (
-                <del className="text-3xl text-gray-400">{formatPrice(oldPrice)} ₽</del>
-              )}
-              {oldPrice && (
-                <span className="bg-rose-500 text-white px-4 py-2 rounded-full font-bold text-lg">
-                  −{Math.round(((oldPrice - currentPrice) / oldPrice) * 100)}%
-                </span>
+                <>
+                  <del className="text-3xl text-gray-400">
+                    {formatPrice(oldPrice)} ₽
+                  </del>
+                  <span className="bg-rose-500 text-white px-4 py-2 rounded-full font-bold text-lg">
+                    −{Math.round(((oldPrice - currentPrice) / oldPrice) * 100)}%
+                  </span>
+                </>
               )}
             </div>
 
-            {/* Количество */}
             <div className="bg-white rounded-3xl shadow-xl p-6 border border-gray-100">
               <p className="font-bold text-lg mb-4">Количество</p>
               <div className="flex items-center gap-6">
                 <button
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  className="w-14 h-14 bg-gradient-to-br from-indigo-100 to-purple-100 hover:from-indigo-200 hover:to-purple-200 rounded-2xl flex items-center justify-center transition disabled:opacity-50 shadow-md"
                   disabled={quantity <= 1}
+                  className="w-14 h-14 bg-gradient-to-br from-indigo-100 to-purple-100 hover:from-indigo-200 hover:to-purple-200 rounded-2xl flex items-center justify-center transition disabled:opacity-50 shadow-md"
                 >
                   <span className="text-2xl font-black">−</span>
                 </button>
-                <span className="text-3xl font-black w-20 text-center">{quantity}</span>
+                <span className="text-3xl font-black w-20 text-center">
+                  {quantity}
+                </span>
                 <button
                   onClick={() => setQuantity(quantity + 1)}
                   className="w-14 h-14 bg-gradient-to-br from-indigo-100 to-purple-100 hover:from-indigo-200 hover:to-purple-200 rounded-2xl flex items-center justify-center transition shadow-md"
@@ -200,11 +258,13 @@ export default function ProductSection() {
                 </button>
               </div>
               <p className="text-xl font-bold mt-5 text-gray-800">
-                Итого: <span className="text-indigo-600 text-3xl">{formatPrice(totalPrice)} ₽</span>
+                Итого:{" "}
+                <span className="text-indigo-600 text-3xl">
+                  {formatPrice(totalPrice)} ₽
+                </span>
               </p>
             </div>
 
-            {/* Кнопки */}
             <div className="flex gap-5">
               <button className="flex-1 py-6 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold text-xl rounded-3xl hover:scale-105 transition-all shadow-2xl flex items-center justify-center gap-3">
                 <ShoppingCart className="w-7 h-7" />
@@ -218,37 +278,82 @@ export default function ProductSection() {
                     : "border-gray-200 hover:border-indigo-600 bg-white"
                 }`}
               >
-                <Heart className={`w-8 h-8 transition-all ${inWishlist ? "text-red-600 fill-current" : "text-gray-600"}`} />
+                <Heart
+                  className={`w-8 h-8 transition-all ${
+                    inWishlist ? "text-red-600 fill-current" : "text-gray-600"
+                  }`}
+                />
               </button>
             </div>
 
-            {/* Доставка */}
             <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-3xl p-8 border border-indigo-200/50 shadow-xl">
               <h4 className="text-2xl font-black flex items-center gap-3 mb-6">
                 <Truck className="w-8 h-8 text-indigo-600" />
                 Доставка и гарантия
               </h4>
               <div className="space-y-5 text-gray-700 text-lg">
-                <div className="flex items-center gap-4"><Check className="w-6 h-6 text-emerald-600" /> Бесплатная доставка по России от 50 000 ₽</div>
-                <div className="flex items-center gap-4"><Shield className="w-6 h-6 text-indigo-600" /> Официальная гарантия 3 года</div>
-                <div className="flex items-center gap-4"><Clock className="w-6 h-6 text-purple-600" /> Установка мастером за 1 час</div>
+                <div className="flex items-center gap-4">
+                  <Check className="w-6 h-6 text-emerald-600" /> Бесплатная
+                  доставка по России от 50 000 ₽
+                </div>
+                <div className="flex items-center gap-4">
+                  <Shield className="w-6 h-6 text-indigo-600" /> Официальная
+                  гарантия 3 года
+                </div>
+                <div className="flex items-center gap-4">
+                  <Clock className="w-6 h-6 text-purple-600" /> Установка
+                  мастером за 1 час
+                </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Характеристики */}
+        {/* Характеристики + комплектация */}
         <div className="mt-24 grid md:grid-cols-2 gap-10">
           <div className="bg-white rounded-3xl shadow-2xl p-10 border border-gray-100">
-            <h3 className="text-3xl font-black mb-8 text-gray-900">Технические характеристики</h3>
+            <h3 className="text-3xl font-black mb-8 text-gray-900">
+              Технические характеристики
+            </h3>
             <table className="w-full text-left text-lg">
               <tbody className="divide-y divide-gray-200">
-                <tr><td className="py-4 pr-8 font-semibold text-gray-700">Тип двери</td><td>{product.door_type || "Металлическая / Деревянная"}</td></tr>
-                <tr><td className="py-4 pr-8 font-semibold text-gray-700">Толщина двери</td><td>{product.door_thickness || "40–120 мм"}</td></tr>
-                <tr><td className="py-4 pr-8 font-semibold text-gray-700">Способы открытия</td><td>{product.unlocking_methods?.join(", ") || "Отпечаток, код, карта, ключ, приложение"}</td></tr>
-                <tr><td className="py-4 pr-8 font-semibold text-gray-700">Автономность</td><td>{product.battery_life || "До 12 месяцев"}</td></tr>
-                <tr><td className="py-4 pr-8 font-semibold text-gray-700">Материал корпуса</td><td>{product.material || "Алюминиевый сплав"}</td></tr>
-                <tr><td className="py-4 pr-8 font-semibold text-gray-700">Вес</td><td>{product.weight || "3.8 кг"}</td></tr>
+                <tr>
+                  <td className="py-4 pr-8 font-semibold text-gray-700">
+                    Тип двери
+                  </td>
+                  <td>{product.door_type || "Металлическая / Деревянная"}</td>
+                </tr>
+                <tr>
+                  <td className="py-4 pr-8 font-semibold text-gray-700">
+                    Толщина двери
+                  </td>
+                  <td>{product.door_thickness || "40–120 мм"}</td>
+                </tr>
+                <tr>
+                  <td className="py-4 pr-8 font-semibold text-gray-700">
+                    Способы открытия
+                  </td>
+                  <td>
+                    {product.unlocking_methods?.join(", ") ||
+                      "Отпечаток, код, карта, ключ, приложение"}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="py-4 pr-8 font-semibold text-gray-700">
+                    Автономность
+                  </td>
+                  <td>{product.battery_life || "До 12 месяцев"}</td>
+                </tr>
+                <tr>
+                  <td className="py-4 pr-8 font-semibold text-gray-700">
+                    Материал корпуса
+                  </td>
+                  <td>{product.material || "Алюминиевый сплав"}</td>
+                </tr>
+                <tr>
+                  <td className="py-4 pr-8 font-semibold text-gray-700">Вес</td>
+                  <td>{product.weight || "3.8 кг"}</td>
+                </tr>
               </tbody>
             </table>
           </div>
@@ -256,7 +361,14 @@ export default function ProductSection() {
           <div className="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-3xl p-10 text-white shadow-2xl">
             <h3 className="text-3xl font-black mb-8">Комплектация премиум</h3>
             <ul className="space-y-5 text-lg">
-              {["Внешняя и внутренняя панель", "RFID-карты (3 шт)", "Механические ключи (2 шт)", "Батарейки AA (8 шт)", "Крепёжный комплект + шаблон", "Инструкция на русском"].map((item) => (
+              {[
+                "Внешняя и внутренняя панель",
+                "RFID-карты (3 шт)",
+                "Механические ключи (2 шт)",
+                "Батарейки AA (8 шт)",
+                "Крепёжный комплект + шаблон",
+                "Инструкция на русском",
+              ].map((item) => (
                 <li key={item} className="flex items-center gap-4">
                   <Check className="w-7 h-7 flex-shrink-0" />
                   {item}
@@ -266,16 +378,20 @@ export default function ProductSection() {
           </div>
         </div>
 
-        {/* ОТЗЫВЫ — РЕАЛЬНЫЕ ИЗ БАЗЫ! */}
+        {/* Отзывы */}
         <div className="mt-24">
           <h3 className="text-4xl md:text-5xl font-black text-center mb-16">
-            {reviews.length > 0 ? `Отзывы покупателей (${reviews.length})` : "Пока нет отзывов"}
+            {reviews.length > 0
+              ? `Отзывы покупателей (${reviews.length})`
+              : "Пока нет отзывов"}
           </h3>
 
           {reviews.length === 0 ? (
             <div className="text-center py-16 bg-white rounded-3xl shadow-xl">
               <User className="w-20 h-20 text-gray-300 mx-auto mb-6" />
-              <p className="text-xl text-gray-600">Будьте первым, кто оставит отзыв!</p>
+              <p className="text-xl text-gray-600">
+                Будьте первым, кто оставит отзыв!
+              </p>
             </div>
           ) : (
             <div className="grid md:grid-cols-3 gap-8">
@@ -289,7 +405,9 @@ export default function ProductSection() {
                       {review.author[0]}
                     </div>
                     <div>
-                      <p className="font-bold text-xl text-gray-900">{review.author}</p>
+                      <p className="font-bold text-xl text-gray-900">
+                        {review.author}
+                      </p>
                       <div className="flex items-center gap-3">
                         <StarRating rating={review.rating} />
                         {review.isVerified && (
@@ -300,8 +418,14 @@ export default function ProductSection() {
                       </div>
                     </div>
                   </div>
-                  <p className="text-gray-700 leading-relaxed text-lg">{review.text}</p>
-                  <p className="text-sm text-gray-500 mt-4">{formatReviewDate(review.date || review.createdAt)}</p>
+                  <p className="text-gray-700 leading-relaxed text-lg">
+                    {review.text}
+                  </p>
+                  <p className="text-sm text-gray-500 mt-4">
+                    {review.createdAt
+                      ? formatReviewDate(review.createdAt)
+                      : "Недавно"}
+                  </p>
                 </div>
               ))}
             </div>
@@ -310,4 +434,4 @@ export default function ProductSection() {
       </div>
     </section>
   );
-} 
+}

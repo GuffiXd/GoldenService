@@ -1,9 +1,9 @@
 // src/components/profile/ProfileInfo.jsx
 import React from "react";
-import { useAuth } from "../../context/useAuth";   // ← ДОБАВЬ ЭТУ СТРОЧКУ!
+import { useAuth } from "../../context/useAuth";
 
 export default function ProfileInfo() {
-  const { user } = useAuth();   // теперь всё ок
+  const { user } = useAuth();
 
   return (
     <div className="space-y-6">

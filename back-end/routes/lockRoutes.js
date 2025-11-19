@@ -3,11 +3,11 @@ const express = require("express");
 const router = express.Router();
 const lockController = require("../controllers/lockController");
 
-// Все роуты:
-router.get("/", lockController.getAllLocks);                    // каталог
-router.get("/popular", lockController.getPopularLocks);        // ← ЭТОТ РОУТ!
-router.get("/slider", lockController.getSliderLocks);          // слайдер
-router.get("/search", lockController.searchLocks);             // поиск
-router.get("/:id", lockController.getLockById);                // страница товара
+
+router.get("/", lockController.getAllLocks);              
+router.get("/popular", lockController.getPopularLocks);      
+router.get("/slider", lockController.getSliderLocks);       
+router.get("/search", lockController.searchLocks);          
+router.get("/:id", lockController.getLockById);               
 
 module.exports = router;

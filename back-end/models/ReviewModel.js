@@ -2,16 +2,9 @@
 const { Model, DataTypes } = require("sequelize");
 const sequelize = require("../config/db");
 
-/**
- * Модель отзыва о замке
- * Таблица: reviews
- * По 3 отзыва на каждый замок (для показа под карточкой товара)
- */
 class Review extends Model {}
 
-/**
- * Инициализация модели Review
- */
+
 Review.init(
   {
     id: {
@@ -50,7 +43,7 @@ Review.init(
     },
 
     date: {
-      type: DataTypes.DATEONLY, // только дата: 2025-04-15
+      type: DataTypes.DATEONLY,
       allowNull: false,
       defaultValue: DataTypes.NOW,
       comment: "Дата отзыва (для отображения: '15 апреля 2025')",
@@ -66,7 +59,7 @@ Review.init(
     sequelize,
     modelName: "Review",
     tableName: "reviews",
-    timestamps: true, // createdAt и updatedAt (на всякий случай)
+    timestamps: true,
     charset: "utf8mb4",
     collate: "utf8mb4_unicode_ci",
     indexes: [

@@ -4,7 +4,7 @@ const Lock = require("../models/LockModel");
 const Review = require("../models/ReviewModel");
 const Category = require("../models/CategoryModel");
 
-// === Вспомогательные функции ===
+
 const formatLock = (lock) => {
   const data = lock.toJSON ? lock.toJSON() : lock;
   return {
@@ -14,9 +14,9 @@ const formatLock = (lock) => {
   };
 };
 
-// === Контроллер замков ===
+
 const lockController = {
-  // 1. Все замки (каталог + фильтры + пагинация)
+
   getAllLocks: async (req, res) => {
     try {
       const {
@@ -81,7 +81,7 @@ const lockController = {
     }
   },
 
-  // 2. Замок по ID — с отзывами и категорией
+
   getLockById: async (req, res) => {
     try {
       const { id } = req.params;
@@ -110,7 +110,7 @@ const lockController = {
     }
   },
 
-  // 3. Популярные замки
+
   getPopularLocks: async (req, res) => {
     try {
       const locks = await Lock.findAll({
@@ -127,7 +127,7 @@ const lockController = {
     }
   },
 
-  // 4. Слайдер (акции)
+
   getSliderLocks: async (req, res) => {
     try {
       const locks = await Lock.findAll({
@@ -146,7 +146,7 @@ const lockController = {
     }
   },
 
-  // 5. Поиск для шапки
+
   searchLocks: async (req, res) => {
     try {
       const { q } = req.query;

@@ -40,7 +40,6 @@ function WhyUs() {
                 key={index}
                 className="group relative bg-white rounded-3xl p-8 shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2"
               >
-                {/* Декоративный градиентный круг */}
                 <div className="absolute -top-6 -left-6 w-24 h-24 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full opacity-10 blur-3xl group-hover:opacity-20 transition-opacity"></div>
 
                 {/* Иконка */}

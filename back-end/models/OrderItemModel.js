@@ -2,16 +2,9 @@
 const { Model, DataTypes } = require("sequelize");
 const sequelize = require("../config/db");
 
-/**
- * Промежуточная таблица: товары в заказе
- * Связывает Order ↔ Lock (многие ко многим) + хранит количество и цену на момент покупки
- * Таблица: order_items
- */
+
 class OrderItem extends Model {}
 
-/**
- * Инициализация модели OrderItem
- */
 OrderItem.init(
   {
     id: {
@@ -42,7 +35,7 @@ OrderItem.init(
   {
     sequelize,
     modelName: "OrderItem",
-    tableName: "order_items",           // ← правильное имя таблицы!
+    tableName: "order_items", 
     timestamps: true,
     charset: "utf8mb4",
     collate: "utf8mb4_unicode_ci",
