@@ -1,39 +1,43 @@
-
 const fs = require("fs");
 const path = require("path");
-const sequelize = require("../config/db");
+const sequelize = require("../config/db"); // Убедись, что путь верный
 
 const db = {};
 
-
+// 1. Автоматическая загрузка всех моделей из папки
 fs.readdirSync(__dirname)
-  .filter(file => {
+  .filter((file) => {
     return (
       file.indexOf(".") !== 0 &&
-      file !== path.basename(__filename) && // исключаем index.js
+      file !== path.basename(__filename) && // исключаем этот файл (index.js)
       file.slice(-3) === ".js"
     );
   })
-  .forEach(file => {
-    const model = require(path.join(__dirname, file));
+  .forEach((file) => {
+    // Загружаем модель
+    const modelDef = require(path.join(__dirname, file));
     
-    // Поддержка обоих стилей: class и sequelize.define
-    if (typeof model === "function" && model.prototype && model.init) {
-      // Это class extends Model — уже инициализирована
-      db[model.name] = model;
-    } else if (typeof model === "function") {
-      // Старый стиль — нужно вызвать с (sequelize, DataTypes)
+    // Инициализируем модель
+    // Если экспорт идет как класс (современный стиль)
+    if (typeof modelDef === "function" && modelDef.prototype && modelDef.init) {
+       // Если модель еще не инициализирована в самом файле, можно вызвать init здесь, 
+       // но обычно в классовом подходе init делается внутри файла модели.
+       // Предполагаем, что require возвращает сам класс модели.
+       db[modelDef.name] = modelDef;
+    } 
+    // Если экспорт идет как функция (стиль module.exports = (sequelize, DataTypes) => ...)
+    else if (typeof modelDef === "function") {
       const { DataTypes } = require("sequelize");
-      const initializedModel = model(sequelize, DataTypes);
-      db[initializedModel.name] = initializedModel;
-    } else {
-      // На всякий случай — если вдруг экспорт объекта
-      Object.assign(db, model);
+      const model = modelDef(sequelize, DataTypes);
+      db[model.name] = model;
     }
   });
 
-// === АССОЦИАЦИИ (только здесь, один раз, красиво и понятно!) ===
+// Сохраняем sequelize в объект db
+db.sequelize = sequelize;
+db.Sequelize = require("sequelize");
 
+// Достаем модели для удобства настройки связей
 const {
   Category,
   Lock,
@@ -42,33 +46,35 @@ const {
   User,
   Statistics,
   OurProject,
-  CallbackModel,      // если есть
-  WholesaleOrder,     // ← наша новая модель!
+  CallbackModel,
+  WholesaleOrder,
+  Favorite, // Убедись, что файл Favorite.js существует в папке models!
+  Address,
+  Review
 } = db;
 
-// 1. Категории ↔ Замки
+// === 2. НАСТРОЙКА АССОЦИАЦИЙ ===
+
+// Категории ↔ Замки
 if (Category && Lock) {
   Category.hasMany(Lock, { foreignKey: "categoryId", as: "locks" });
   Lock.belongsTo(Category, { foreignKey: "categoryId", as: "category" });
 }
 
-// 2. Пользователи ↔ Заказы
+// Пользователи ↔ Заказы
 if (User && Order) {
   User.hasMany(Order, { foreignKey: "userId", as: "orders" });
   Order.belongsTo(User, { foreignKey: "userId", as: "user" });
 }
 
-// 3. Заказы ↔ Товары в заказе ↔ Замки (многие ко многим)
+// Заказы ↔ Товары ↔ Замки
 if (Order && OrderItem && Lock) {
-  // Order → OrderItem
   Order.hasMany(OrderItem, { foreignKey: "orderId", as: "orderItems" });
   OrderItem.belongsTo(Order, { foreignKey: "orderId" });
 
-  // Lock → OrderItem
   Lock.hasMany(OrderItem, { foreignKey: "lockId", as: "orderItems" });
   OrderItem.belongsTo(Lock, { foreignKey: "lockId" });
 
-  // Many-to-Many: Order ↔ Lock через OrderItem
   Order.belongsToMany(Lock, {
     through: OrderItem,
     foreignKey: "orderId",
@@ -83,33 +89,36 @@ if (Order && OrderItem && Lock) {
   });
 }
 
-// 4. Оптовые заказы ↔ Замки
+// Оптовые заказы
 if (WholesaleOrder && Lock) {
-  Lock.hasMany(WholesaleOrder, {
-    foreignKey: "lockId",
-    as: "wholesaleOrders",
-  });
-  WholesaleOrder.belongsTo(Lock, {
-    foreignKey: "lockId",
-    as: "lock",
-  });
+  Lock.hasMany(WholesaleOrder, { foreignKey: "lockId", as: "wholesaleOrders" });
+  WholesaleOrder.belongsTo(Lock, { foreignKey: "lockId", as: "lock" });
 }
 
-if (db.Lock && db.Review) {
-  db.Lock.hasMany(db.Review, {
-    foreignKey: "lockId",
-    as: "reviews",
-  });
-
-  db.Review.belongsTo(db.Lock, {
-    foreignKey: "lockId",
-    as: "lock",
-  });
+// Отзывы
+if (Lock && Review) {
+  Lock.hasMany(Review, { foreignKey: "lockId", as: "reviews" });
+  Review.belongsTo(Lock, { foreignKey: "lockId", as: "lock" });
 }
 
+// Адреса
+if (User && Address) {
+  User.hasMany(Address, { foreignKey: "userId", as: "addresses" });
+  Address.belongsTo(User, { foreignKey: "userId" });
+}
 
+// === ИЗБРАННОЕ (СЕРДЦЕ) ===
+if (User && Lock && Favorite) {
+  // Связь "Многие ко многим" для удобного получения списка
+  User.belongsToMany(Lock, { through: Favorite, foreignKey: "userId", as: "favorites" });
+  Lock.belongsToMany(User, { through: Favorite, foreignKey: "lockId", as: "favoritedBy" });
 
-db.sequelize = sequelize;
-db.Sequelize = require("sequelize");
+  // Прямые связи для работы с таблицей связей напрямую (удаление, добавление)
+  User.hasMany(Favorite, { foreignKey: "userId" });
+  Favorite.belongsTo(User, { foreignKey: "userId" });
+
+  Lock.hasMany(Favorite, { foreignKey: "lockId" });
+  Favorite.belongsTo(Lock, { foreignKey: "lockId" });
+}
 
 module.exports = db;

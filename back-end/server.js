@@ -1,39 +1,26 @@
-// backend/server.js
 const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
 const dotenv = require("dotenv");
 const path = require("path");
+const session = require("express-session");
+const MySQLStore = require("express-mysql-session")(session);
 
-//КОНФИГ
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-//ПОДКЛЮЧЕНИЕ БД И МОДЕЛЕЙ
-require("./models");
-const { sequelize } = require("./models");
-const seedDatabase = require("./seedDatabase");
-
-// ==================== РОУТЫ ====================
-const lockRoutes = require("./routes/LockRoutes");
-const categoryRoutes = require("./routes/CategoryRoutes");
-const statisticsRoutes = require("./routes/StatisticsRoutes");
-const projectRoutes = require("./routes/ProjectRoutes");
-const callbackRoutes = require("./routes/CallbackRoutes");
-const wholesaleRoutes = require("./routes/WholesaleRoutes");
-const authRoutes = require("./routes/AuthRoutes");
-const orderRoutes = require("./routes/OrdersRoutes");
-
-//МИДЛВАРЫ
+// 1. === CORS (ОБЯЗАТЕЛЬНО ПЕРВЫМ) ===
 app.use(
   cors({
-    origin: ["http://localhost:5173", "http://127.0.0.1:5173"],
-    credentials: true,
+    origin: ["http://localhost:5173", "http://127.0.0.1:5173"], // Порт Vite
+    credentials: true, // Разрешаем куки/сессии
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   })
 );
 
+// 2. === HELMET И ПАРСЕРЫ ===
 app.use(
   helmet({
     crossOriginResourcePolicy: { policy: "cross-origin" },
@@ -43,99 +30,95 @@ app.use(
 
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
-
-// Статические файлы
 app.use("/images", express.static(path.join(__dirname, "images")));
 
-//API РОУТЫ
-app.use("/api/locks", lockRoutes);
-app.use("/api/categories", categoryRoutes);
-app.use("/api/statistics", statisticsRoutes);
-app.use("/api/projects", projectRoutes);
-app.use("/api/form", callbackRoutes);
-app.use("/api/wholesale", wholesaleRoutes);
-app.use("/api/auth", authRoutes);
-app.use("/api/orders", orderRoutes);
+// 3. === СЕССИИ ===
+const sessionStore = new MySQLStore({
+  host: process.env.DB_HOST || "localhost",
+  port: 3306,
+  user: process.env.DB_USER || "root",
+  password: process.env.DB_PASS || "",
+  database: process.env.DB_NAME || "golden_soft_db",
+  clearExpired: true,
+  checkExpirationInterval: 900000,
+});
 
-//ГЛАВНАЯ СТРАНИЦА API
-app.get("/", (req, res) => {
-  res.json({
-    message: "Golden Soft API",
-    status: "работает",
-    version: "1.0.0",
-    time: new Date().toLocaleString("ru-RU"),
-    environment: process.env.NODE_ENV || "development",
-    endpoints: {
-      locks: "/api/locks",
-      categories: "/api/categories",
-      statistics: "/api/statistics",
-      projects: "/api/projects",
-      callback: "/api/form",
-      wholesale: "/api/wholesale",
-      auth: "/api/auth",
-      orders: "/api/orders",
+app.use(
+  session({
+    key: "golden_session",
+    secret: process.env.SESSION_SECRET || "super_secret_key",
+    store: sessionStore,
+    resave: false,
+    saveUninitialized: false, // Не создавать пустые сессии
+    cookie: {
+      httpOnly: true,
+      secure: false, // false для localhost, true для HTTPS
+      maxAge: 1000 * 60 * 60 * 24 * 30, // 30 дней
+      sameSite: "lax", 
     },
+  })
+);
+
+// 4. === ПОДКЛЮЧЕНИЕ БД ===
+// Важно: сначала require models, чтобы sequelize инициализировался
+const db = require("./models"); 
+const { sequelize, User } = db;
+const seedDatabase = require("./seedDatabase");
+
+// 5. === ПРОСЛОЙКА АВТОРИЗАЦИИ ===
+app.use(async (req, res, next) => {
+  if (req.session && req.session.userId) {
+    try {
+      const user = await User.findByPk(req.session.userId, {
+        attributes: ["id", "name", "email", "phone", "role"],
+      });
+      if (user) req.user = user;
+    } catch (err) {
+      console.error("Ошибка восстановления сессии:", err);
+    }
+  }
+  next();
+});
+
+// 6. === РОУТЫ ===
+app.use("/api/locks", require("./routes/LockRoutes"));
+app.use("/api/categories", require("./routes/CategoryRoutes"));
+app.use("/api/statistics", require("./routes/StatisticsRoutes"));
+app.use("/api/projects", require("./routes/ProjectRoutes"));
+app.use("/api/form", require("./routes/CallbackRoutes"));
+app.use("/api/wholesale", require("./routes/WholesaleRoutes"));
+app.use("/api/auth", require("./routes/AuthRoutes"));
+app.use("/api/orders", require("./routes/OrdersRoutes"));
+app.use("/api/favorites", require("./routes/FavoriteRoutes")); // <-- Наш роут
+
+// Тестовый роут
+app.get("/", (req, res) => {
+  res.json({ 
+    status: "Server Works", 
+    user: req.user ? req.user.name : "Guest" 
   });
 });
 
-//404
-app.use((req, res) => {
-  res.status(404).json({
-    success: false,
-    message: `Маршрут ${req.originalUrl} не найден`,
-  });
-});
-
-//ГЛОБАЛЬНЫЙ ОБРАБОТЧИК ОШИБОК
+// Ошибки
 app.use((err, req, res, next) => {
-  console.error("Ошибка сервера:", err);
-
-  res.status(err.status || 500).json({
-    success: false,
-    message: err.message || "Внутренняя ошибка сервера",
-    ...(process.env.NODE_ENV === "development" && {
-      stack: err.stack,
-      error: err.name,
-    }),
-  });
+  console.error(err);
+  res.status(500).json({ message: "Internal Server Error", error: err.message });
 });
 
-//ЗАПУСК СЕРВЕРА
+// 7. === ЗАПУСК ===
 const startServer = async () => {
   try {
-    console.log("Подключение к MySQL...");
-
     await sequelize.authenticate();
-    console.log("MySQL успешно подключён");
-
+    console.log("MySQL подключен.");
     
-    if (process.env.NODE_ENV !== "production") {
-      console.log("Синхронизация моделей с БД (dev-режим)...");
-      await sequelize.sync({ alter: true });
-      console.log("Схема БД синхронизирована");
+    // alter: true обновит таблицы, если вы меняли модели
+    await sequelize.sync({ alter: false }); 
 
-
-      const lockCount = await sequelize.models.Lock?.count();
-      if (lockCount === 0 || lockCount === undefined) {
-        console.log("База пустая — запускаем сид...");
-        await seedDatabase();
-        console.log("Сид успешно выполнен!");
-      } else {
-        console.log(`В таблице locks уже есть ${lockCount} записей — сид пропущен`);
-      }
-    } else {
-      console.log("Production режим — sync и сид отключены");
-    }
-
-
-    app.listen(PORT, "0.0.0.0", () => {
-      console.log("\nСервер успешно запущен!");
-      console.log(`http://localhost:${PORT}`);
-      console.log(`Режим: ${process.env.NODE_ENV || "development"}\n`);
+    app.listen(PORT, () => {
+      console.log(`Сервер запущен на http://localhost:${PORT}`);
     });
-  } catch (error) {
-    console.error("Не удалось запустить сервер:", error.message || error);
-    process.exit(1);
+  } catch (e) {
+    console.error(e);
   }
 };
 

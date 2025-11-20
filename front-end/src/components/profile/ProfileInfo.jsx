@@ -21,9 +21,6 @@ export default function ProfileInfo() {
           <label className="text-sm text-gray-500">Телефон</label>
           <p className="text-xl font-semibold">{user?.phone || "Не указан"}</p>
         </div>
-        <button className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-8 py-4 rounded-2xl font-bold hover:scale-105 transition shadow-lg">
-          Редактировать профиль
-        </button>
       </div>
     </div>
   );

@@ -1,6 +1,5 @@
-// src/components/sections/ProductSection.jsx
 import React, { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import {
   Heart,
   ShoppingCart,
@@ -9,21 +8,25 @@ import {
   Clock,
   Star,
   Truck,
+  User as UserIcon,
+  ArrowLeft,
   Sparkles,
-  User,
 } from "lucide-react";
+import { useAuth } from "../../context/useAuth";
+import toast from "react-hot-toast";
 
 const API_URL = "http://localhost:5000";
 
-// Форматирование цены
+// === ХЕЛПЕРЫ ===
 const formatPrice = (value) => {
   if (!value) return "—";
   const num = Number(value);
   return isNaN(num) ? "—" : num.toLocaleString("ru-RU");
 };
 
-// Дата отзыва
+// Используется для даты отзыва
 const formatReviewDate = (dateString) => {
+  if (!dateString) return "";
   const date = new Date(dateString);
   return date.toLocaleDateString("ru-RU", {
     day: "numeric",
@@ -32,7 +35,6 @@ const formatReviewDate = (dateString) => {
   });
 };
 
-// Звёздочки рейтинга
 const StarRating = ({ rating }) => (
   <div className="flex">
     {[...Array(5)].map((_, i) => (
@@ -48,12 +50,16 @@ const StarRating = ({ rating }) => (
 
 export default function ProductSection() {
   const { id } = useParams();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [quantity, setQuantity] = useState(1);
+  const [quantity, setQuantity] = useState(1); // Используется в кнопках +/-
   const [inWishlist, setInWishlist] = useState(false);
   const [selectedImage, setSelectedImage] = useState(0);
 
+  // 1. Загрузка товара
   useEffect(() => {
     fetch(`${API_URL}/api/locks/${id}`)
       .then((res) => {
@@ -69,6 +75,68 @@ export default function ProductSection() {
         setLoading(false);
       });
   }, [id]);
+
+  // 2. Проверка избранного
+  useEffect(() => {
+    if (!user || !product) return;
+
+    const checkWishlist = async () => {
+      try {
+        const res = await fetch(`${API_URL}/api/favorites`, {
+          method: "GET",
+          credentials: "include",
+        });
+
+        if (res.ok) {
+          const favorites = await res.json();
+          // Приводим ID к строке для надежного сравнения
+          const isIn = favorites.some((f) => String(f.id) === String(product.id));
+          setInWishlist(isIn);
+        }
+      } catch (err) {
+        console.error("Ошибка проверки избранного:", err);
+      }
+    };
+
+    checkWishlist();
+  }, [user, product]);
+
+  // 3. Логика клика по сердцу
+  const toggleWishlist = async () => {
+    if (!user) {
+      toast.error("Войдите в аккаунт, чтобы добавить в избранное");
+      navigate("/login");
+      return;
+    }
+
+    const previousState = inWishlist;
+    setInWishlist(!inWishlist); // Оптимистичное обновление
+
+    try {
+      const method = previousState ? "DELETE" : "POST";
+      const res = await fetch(`${API_URL}/api/favorites/${product.id}`, {
+        method,
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      if (res.status === 401) {
+        setInWishlist(previousState);
+        toast.error("Сессия истекла. Войдите заново");
+        navigate("/login");
+        return;
+      }
+
+      if (!res.ok) throw new Error("Ошибка сервера");
+
+      const data = await res.json();
+      toast.success(data.message);
+    } catch (err) {
+      console.error("Ошибка избранного:", err);
+      setInWishlist(previousState);
+      toast.error("Не удалось обновить избранное");
+    }
+  };
 
   if (loading) {
     return (
@@ -86,45 +154,48 @@ export default function ProductSection() {
           to="/catalog"
           className="inline-flex items-center gap-2 text-indigo-600 hover:underline"
         >
-          ← Вернуться в каталог
+          <ArrowLeft className="w-5 h-5" />
+          Вернуться в каталог
         </Link>
       </div>
     );
   }
 
+  // === РАСЧЕТЫ ===
   const currentPrice =
     Number(product.price_with_discount) || Number(product.price) || 0;
   const oldPrice = product.price_with_discount ? Number(product.price) : null;
+  
+  // Используем totalPrice в верстке
   const totalPrice = currentPrice * quantity;
+  
+  // Используем reviews в верстке
   const reviews = product.reviews || [];
 
-  // ГАЛЕРЕЯ — 100% РАБОЧАЯ И КРАСИВАЯ
   const parseGallery = () => {
     if (!product.image_gallery) return [];
     try {
       const parsed = JSON.parse(product.image_gallery);
       return Array.isArray(parsed) ? parsed : [];
-    } catch (e) {
-      console.warn("Ошибка парсинга image_gallery:", e);
+    } catch {
+      // Убрали (e), чтобы ESLint не ругался на unused var
       return [];
     }
   };
 
   const galleryImages = parseGallery();
   const mainImage = product.image_path;
-  const allGalleryImages = [mainImage, ...galleryImages.slice(0, 3)]; // максимум 4 фото
+  const allGalleryImages = [mainImage, ...galleryImages]
+    .filter(Boolean)
+    .slice(0, 4);
+
   const thumbnails =
-    allGalleryImages.length >= 4
-      ? allGalleryImages
-      : [
-          ...allGalleryImages,
-          ...Array(4 - allGalleryImages.length).fill(mainImage),
-        ];
+    allGalleryImages.length > 0 ? allGalleryImages : [mainImage];
 
   return (
     <section className="py-12 md:py-20 bg-gradient-to-b from-indigo-50 via-white to-purple-50 min-h-screen">
       <div className="max-w-7xl mx-auto px-6">
-        {/* Хлебные крошки */}
+        {/* Навигация */}
         <nav className="text-sm text-gray-600 mb-8 flex items-center gap-2 flex-wrap">
           <Link to="/" className="hover:text-indigo-600 transition">
             Главная
@@ -133,304 +204,191 @@ export default function ProductSection() {
           <Link to="/catalog" className="hover:text-indigo-600 transition">
             Каталог
           </Link>
-          {product.category && (
-            <>
-              <span>→</span>
-              <Link
-                to={`/catalog?category=${product.category.slug}`}
-                className="hover:text-indigo-600 transition"
-              >
-                {product.category.name}
-              </Link>
-            </>
-          )}
           <span>→</span>
           <span className="text-indigo-600 font-medium">{product.name}</span>
         </nav>
 
         <div className="grid lg:grid-cols-2 gap-12 xl:gap-20">
-          {/* Левая часть — фото */}
+          {/* ГАЛЕРЕЯ */}
           <div className="space-y-6">
-            {/* Главное фото */}
             <div className="relative group">
               <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/20 to-purple-600/20 rounded-3xl blur-3xl opacity-70 group-hover:opacity-100 transition-opacity duration-700 -z-10"></div>
               <img
-                src={`${API_URL}${thumbnails[selectedImage]}`}
+                src={`${API_URL}${thumbnails[selectedImage] || thumbnails[0]}`}
                 alt={product.name}
-                className="w-full h-[500px] md:h-[650px] object-contain rounded-3xl shadow-2xl bg-gradient-to-br from-indigo-50/50 to-purple-50/30 p-8 transition-all duration-500 hover:scale-[1.02]"
+                className="w-full h-[400px] md:h-[550px] object-contain rounded-3xl shadow-2xl bg-white p-4"
               />
               <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-md px-4 py-2 rounded-full shadow-lg flex items-center gap-2">
                 <Sparkles className="w-5 h-5 text-indigo-600" />
-                <span className="text-sm font-bold text-indigo-600">
-                  Новинка 2025
-                </span>
+                <span className="text-sm font-bold text-indigo-600">HIT</span>
               </div>
             </div>
 
-            {/* Миниатюры — всегда 4 */}
-            <div className="grid grid-cols-4 gap-4">
-              {thumbnails.map((img, i) => (
-                <button
-                  key={i}
-                  onClick={() => setSelectedImage(i)}
-                  className={`relative rounded-2xl overflow-hidden border-4 transition-all duration-300 shadow-md hover:shadow-xl ${
-                    selectedImage === i
-                      ? "border-indigo-600 ring-4 ring-indigo-600/30 scale-105"
-                      : "border-gray-200 hover:border-indigo-400"
-                  }`}
-                >
-                  <img
-                    src={`${API_URL}${img}`}
-                    alt={`${product.name} — фото ${i + 1}`}
-                    className="w-full h-32 object-cover"
-                  />
-                  {selectedImage === i && (
-                    <div className="absolute inset-0 bg-indigo-600/20 pointer-events-none"></div>
-                  )}
-                </button>
-              ))}
-            </div>
+            {thumbnails.length > 1 && (
+              <div className="grid grid-cols-4 gap-4">
+                {thumbnails.map((img, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setSelectedImage(i)}
+                    className={`relative rounded-2xl overflow-hidden border-2 transition-all h-24 ${
+                      selectedImage === i
+                        ? "border-indigo-600 ring-2 ring-indigo-600/30 scale-105"
+                        : "border-transparent hover:border-indigo-300"
+                    }`}
+                  >
+                    <img
+                      src={`${API_URL}${img}`}
+                      alt=""
+                      className="w-full h-full object-cover"
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
-          {/* Правая часть — информация */}
+          {/* ИНФОРМАЦИЯ О ТОВАРЕ */}
           <div className="space-y-8">
             <div>
               <h1 className="text-4xl md:text-5xl font-black text-gray-900 leading-tight">
                 {product.name}
               </h1>
               <p className="text-xl text-gray-600 mt-3">
-                Артикул: {product.article}
+                Артикул: {product.article || "—"}
               </p>
-
-              {reviews.length > 0 && (
-                <div className="flex items-center gap-6 mt-6">
-                  <StarRating
-                    rating={Math.round(
-                      reviews.reduce((a, r) => a + r.rating, 0) / reviews.length
-                    )}
-                  />
-                  <span className="text-lg font-bold text-gray-700">
-                    {(
-                      reviews.reduce((a, r) => a + r.rating, 0) / reviews.length
-                    ).toFixed(1)}
-                  </span>
-                  <span className="text-gray-600">
-                    ({reviews.length} отзывов)
-                  </span>
-                </div>
-              )}
+              
+              {/* Рейтинг */}
+              <div className="flex items-center gap-4 mt-4">
+                 <StarRating rating={5} />
+                 <span className="text-gray-500 text-sm">
+                   ({reviews.length} отзывов)
+                 </span>
+              </div>
             </div>
 
+            {/* ЦЕНА */}
             <div className="flex items-baseline gap-6">
-              <span className="text-6xl font-black text-indigo-600">
+              <span className="text-5xl font-black text-indigo-600">
                 {formatPrice(currentPrice)} ₽
               </span>
               {oldPrice && (
                 <>
-                  <del className="text-3xl text-gray-400">
+                  <del className="text-2xl text-gray-400">
                     {formatPrice(oldPrice)} ₽
                   </del>
-                  <span className="bg-rose-500 text-white px-4 py-2 rounded-full font-bold text-lg">
-                    −{Math.round(((oldPrice - currentPrice) / oldPrice) * 100)}%
+                  <span className="bg-rose-500 text-white px-3 py-1 rounded-full text-sm font-bold">
+                    SALE
                   </span>
                 </>
               )}
             </div>
 
-            <div className="bg-white rounded-3xl shadow-xl p-6 border border-gray-100">
-              <p className="font-bold text-lg mb-4">Количество</p>
-              <div className="flex items-center gap-6">
-                <button
-                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  disabled={quantity <= 1}
-                  className="w-14 h-14 bg-gradient-to-br from-indigo-100 to-purple-100 hover:from-indigo-200 hover:to-purple-200 rounded-2xl flex items-center justify-center transition disabled:opacity-50 shadow-md"
-                >
-                  <span className="text-2xl font-black">−</span>
-                </button>
-                <span className="text-3xl font-black w-20 text-center">
-                  {quantity}
-                </span>
-                <button
-                  onClick={() => setQuantity(quantity + 1)}
-                  className="w-14 h-14 bg-gradient-to-br from-indigo-100 to-purple-100 hover:from-indigo-200 hover:to-purple-200 rounded-2xl flex items-center justify-center transition shadow-md"
-                >
-                  <span className="text-2xl font-black">+</span>
-                </button>
+            {/* СЕЛЕКТОР КОЛИЧЕСТВА (Fix unused setQuantity/quantity) */}
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 max-w-md">
+              <p className="font-bold text-gray-700 mb-3">Количество:</p>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <button
+                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                    className="w-10 h-10 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-xl font-bold text-gray-600 transition"
+                  >
+                    −
+                  </button>
+                  <span className="text-2xl font-bold w-8 text-center">
+                    {quantity}
+                  </span>
+                  <button
+                    onClick={() => setQuantity(quantity + 1)}
+                    className="w-10 h-10 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-xl font-bold text-gray-600 transition"
+                  >
+                    +
+                  </button>
+                </div>
+                
+                {/* ИТОГОВАЯ ЦЕНА (Fix unused totalPrice) */}
+                <div className="text-right">
+                  <p className="text-xs text-gray-500">Итого:</p>
+                  <p className="text-2xl font-black text-indigo-600">
+                    {formatPrice(totalPrice)} ₽
+                  </p>
+                </div>
               </div>
-              <p className="text-xl font-bold mt-5 text-gray-800">
-                Итого:{" "}
-                <span className="text-indigo-600 text-3xl">
-                  {formatPrice(totalPrice)} ₽
-                </span>
-              </p>
             </div>
 
-            <div className="flex gap-5">
-              <button className="flex-1 py-6 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold text-xl rounded-3xl hover:scale-105 transition-all shadow-2xl flex items-center justify-center gap-3">
-                <ShoppingCart className="w-7 h-7" />
-                Купить сейчас
+            {/* КНОПКИ ДЕЙСТВИЯ */}
+            <div className="flex gap-4">
+              <button className="flex-1 py-4 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition shadow-lg hover:shadow-indigo-500/30 flex justify-center items-center gap-2 transform active:scale-95">
+                <ShoppingCart /> Добавить в корзину
               </button>
+
               <button
-                onClick={() => setInWishlist(!inWishlist)}
-                className={`p-6 rounded-3xl border-4 transition-all shadow-xl ${
+                onClick={toggleWishlist}
+                className={`p-4 rounded-xl border-2 transition-all transform active:scale-95 ${
                   inWishlist
-                    ? "bg-red-50 border-red-500"
-                    : "border-gray-200 hover:border-indigo-600 bg-white"
+                    ? "border-red-500 bg-red-50 text-red-600"
+                    : "border-gray-200 hover:border-red-300 text-gray-400 hover:text-red-500"
                 }`}
               >
                 <Heart
-                  className={`w-8 h-8 transition-all ${
-                    inWishlist ? "text-red-600 fill-current" : "text-gray-600"
-                  }`}
+                  className={`w-8 h-8 ${inWishlist ? "fill-current" : ""}`}
                 />
               </button>
             </div>
 
-            <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-3xl p-8 border border-indigo-200/50 shadow-xl">
-              <h4 className="text-2xl font-black flex items-center gap-3 mb-6">
-                <Truck className="w-8 h-8 text-indigo-600" />
-                Доставка и гарантия
-              </h4>
-              <div className="space-y-5 text-gray-700 text-lg">
-                <div className="flex items-center gap-4">
-                  <Check className="w-6 h-6 text-emerald-600" /> Бесплатная
-                  доставка по России от 50 000 ₽
-                </div>
-                <div className="flex items-center gap-4">
-                  <Shield className="w-6 h-6 text-indigo-600" /> Официальная
-                  гарантия 3 года
-                </div>
-                <div className="flex items-center gap-4">
-                  <Clock className="w-6 h-6 text-purple-600" /> Установка
-                  мастером за 1 час
-                </div>
+            {/* ПРЕИМУЩЕСТВА */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="flex items-center gap-3 text-gray-700 bg-white p-3 rounded-xl shadow-sm border border-gray-100">
+                <Check className="text-emerald-500 w-6 h-6" />
+                <span className="text-sm font-medium">В наличии</span>
+              </div>
+              <div className="flex items-center gap-3 text-gray-700 bg-white p-3 rounded-xl shadow-sm border border-gray-100">
+                <Truck className="text-blue-500 w-6 h-6" />
+                <span className="text-sm font-medium">Быстрая доставка</span>
+              </div>
+              <div className="flex items-center gap-3 text-gray-700 bg-white p-3 rounded-xl shadow-sm border border-gray-100">
+                <Shield className="text-purple-500 w-6 h-6" />
+                <span className="text-sm font-medium">Гарантия 1 год</span>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Характеристики + комплектация */}
-        <div className="mt-24 grid md:grid-cols-2 gap-10">
-          <div className="bg-white rounded-3xl shadow-2xl p-10 border border-gray-100">
-            <h3 className="text-3xl font-black mb-8 text-gray-900">
-              Технические характеристики
-            </h3>
-            <table className="w-full text-left text-lg">
-              <tbody className="divide-y divide-gray-200">
-                <tr>
-                  <td className="py-4 pr-8 font-semibold text-gray-700">
-                    Тип двери
-                  </td>
-                  <td>{product.door_type || "Металлическая / Деревянная"}</td>
-                </tr>
-                <tr>
-                  <td className="py-4 pr-8 font-semibold text-gray-700">
-                    Толщина двери
-                  </td>
-                  <td>{product.door_thickness || "40–120 мм"}</td>
-                </tr>
-                <tr>
-                  <td className="py-4 pr-8 font-semibold text-gray-700">
-                    Способы открытия
-                  </td>
-                  <td>
-                    {product.unlocking_methods?.join(", ") ||
-                      "Отпечаток, код, карта, ключ, приложение"}
-                  </td>
-                </tr>
-                <tr>
-                  <td className="py-4 pr-8 font-semibold text-gray-700">
-                    Автономность
-                  </td>
-                  <td>{product.battery_life || "До 12 месяцев"}</td>
-                </tr>
-                <tr>
-                  <td className="py-4 pr-8 font-semibold text-gray-700">
-                    Материал корпуса
-                  </td>
-                  <td>{product.material || "Алюминиевый сплав"}</td>
-                </tr>
-                <tr>
-                  <td className="py-4 pr-8 font-semibold text-gray-700">Вес</td>
-                  <td>{product.weight || "3.8 кг"}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <div className="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-3xl p-10 text-white shadow-2xl">
-            <h3 className="text-3xl font-black mb-8">Комплектация премиум</h3>
-            <ul className="space-y-5 text-lg">
-              {[
-                "Внешняя и внутренняя панель",
-                "RFID-карты (3 шт)",
-                "Механические ключи (2 шт)",
-                "Батарейки AA (8 шт)",
-                "Крепёжный комплект + шаблон",
-                "Инструкция на русском",
-              ].map((item) => (
-                <li key={item} className="flex items-center gap-4">
-                  <Check className="w-7 h-7 flex-shrink-0" />
-                  {item}
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-
-        {/* Отзывы */}
-        <div className="mt-24">
-          <h3 className="text-4xl md:text-5xl font-black text-center mb-16">
-            {reviews.length > 0
-              ? `Отзывы покупателей (${reviews.length})`
-              : "Пока нет отзывов"}
-          </h3>
-
+        {/* СЕКЦИЯ ОТЗЫВОВ (Fix unused reviews/formatReviewDate) */}
+        <div className="mt-20">
+          <h2 className="text-3xl font-bold mb-8 text-gray-900">
+            Отзывы покупателей ({reviews.length})
+          </h2>
+          
           {reviews.length === 0 ? (
-            <div className="text-center py-16 bg-white rounded-3xl shadow-xl">
-              <User className="w-20 h-20 text-gray-300 mx-auto mb-6" />
-              <p className="text-xl text-gray-600">
-                Будьте первым, кто оставит отзыв!
-              </p>
+            <div className="bg-white p-8 rounded-3xl text-center border border-gray-100 shadow-sm">
+               <p className="text-gray-500">Пока нет отзывов. Станьте первым!</p>
             </div>
           ) : (
-            <div className="grid md:grid-cols-3 gap-8">
-              {reviews.map((review) => (
-                <div
-                  key={review.id}
-                  className="bg-white rounded-3xl shadow-2xl p-8 border border-gray-100 hover:shadow-3xl transition-all"
-                >
-                  <div className="flex items-center gap-4 mb-6">
-                    <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-white text-2xl font-black">
-                      {review.author[0]}
-                    </div>
-                    <div>
-                      <p className="font-bold text-xl text-gray-900">
-                        {review.author}
-                      </p>
+            <div className="grid md:grid-cols-2 gap-6">
+              {reviews.map((review, index) => (
+                <div key={index} className="bg-white p-6 rounded-2xl shadow-md border border-gray-50">
+                   <div className="flex justify-between items-start mb-4">
                       <div className="flex items-center gap-3">
-                        <StarRating rating={review.rating} />
-                        {review.isVerified && (
-                          <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full">
-                            Проверенный покупатель
-                          </span>
-                        )}
+                         <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-700 font-bold">
+                            <UserIcon size={20} />
+                         </div>
+                         <div>
+                            <p className="font-bold text-gray-900">{review.author || "Пользователь"}</p>
+                            <StarRating rating={review.rating || 5} />
+                         </div>
                       </div>
-                    </div>
-                  </div>
-                  <p className="text-gray-700 leading-relaxed text-lg">
-                    {review.text}
-                  </p>
-                  <p className="text-sm text-gray-500 mt-4">
-                    {review.createdAt
-                      ? formatReviewDate(review.createdAt)
-                      : "Недавно"}
-                  </p>
+                      <span className="text-sm text-gray-400">
+                        {/* Вот здесь используется функция форматирования даты */}
+                        {formatReviewDate(review.createdAt)}
+                      </span>
+                   </div>
+                   <p className="text-gray-700 leading-relaxed">{review.text}</p>
                 </div>
               ))}
             </div>
           )}
         </div>
+
       </div>
     </section>
   );
