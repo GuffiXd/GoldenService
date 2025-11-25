@@ -1,54 +1,25 @@
-// backend/routes/OrdersRoutes.js
 const express = require("express");
 const router = express.Router();
 
-const Order = require("../models/OrderModel");
-const OrderItem = require("../models/OrderItemModel");
-const Lock = require("../models/LockModel");
+// Импорт контроллера
+const { 
+  createOrder, 
+  getMyOrders, 
+  getUserOrders 
+} = require("../controllers/OrderController");
 
-router.get("/user/:userId", async (req, res) => {
-  try {
-    const userId = Number(req.params.userId);
+// Импорт middleware авторизации
+const authMiddleware = require("../middleware/auth"); 
 
-    if (!userId || isNaN(userId)) {
-      return res.status(400).json({ error: "Неверный ID пользователя" });
-    }
+// --- Маршруты ---
 
-    const orders = await Order.findAll({
-      where: { userId },
-      attributes: [
-        "id",
-        "status",
-        "total_price",
-        "payment_method",
-        "createdAt",
-        "address",
-      ],
+// 1. Создание заказа (Требует авторизации)
+router.post("/", authMiddleware, createOrder);
 
-      include: [
-        {
-          model: Lock,
-          as: "items", // ← ВАЖНО!
-          attributes: ["id", "name", "image_path", "article"],
+// 2. Получение заказов текущего пользователя (Требует авторизации)
+router.get("/my", authMiddleware, getMyOrders);
 
-          through: {
-            model: OrderItem,
-            attributes: ["quantity", "price_at_purchase"],
-          },
-        },
-      ],
-
-      order: [["createdAt", "DESC"]],
-    });
-
-    res.json(orders);
-  } catch (err) {
-    console.error("Ошибка в /api/orders/user/:userId:", err);
-    res.status(500).json({
-      error: "Ошибка сервера",
-      details: err.message,
-    });
-  }
-});
+// 3. Получение заказов по ID пользователя (Можно добавить authMiddleware, если нужно ограничить доступ)
+router.get("/user/:userId", authMiddleware, getUserOrders); // Добавил auth для безопасности
 
 module.exports = router;

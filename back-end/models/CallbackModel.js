@@ -1,12 +1,10 @@
-// back-end/models/StatisticsModel.js
+// back-end/models/CallbackModel.js
 const { Model, DataTypes } = require("sequelize");
 const sequelize = require("../config/db");
 
+class Callback extends Model {}
 
-class Statistics extends Model {}
-
-
-Statistics.init(
+Callback.init(
   {
     id: {
       type: DataTypes.INTEGER,
@@ -14,26 +12,33 @@ Statistics.init(
       autoIncrement: true,
       allowNull: false,
     },
-    title: {
+    name: {
       type: DataTypes.STRING(100),
       allowNull: false,
-      comment: "Название показателя (например: 'Довольных клиентов')",
+      comment: "Имя клиента",
     },
-    value: {
-      type: DataTypes.INTEGER,
+    email: {
+      type: DataTypes.STRING(100),
       allowNull: false,
-      defaultValue: 0,
-      comment: "Числовое значение (например: 1250)",
+      validate: {
+        isEmail: true,
+      },
+      comment: "Email клиента",
+    },
+    is_processed: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+      comment: "Обработана ли заявка",
     },
   },
   {
     sequelize,
-    modelName: "Statistics",   
-    tableName: "statistics",   
-    timestamps: true,           
+    modelName: "Callback",
+    tableName: "callbacks",
+    timestamps: true,
     charset: "utf8mb4",
     collate: "utf8mb4_unicode_ci",
   }
 );
 
-module.exports = Statistics;
+module.exports = Callback;

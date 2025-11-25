@@ -78,6 +78,11 @@ Lock.init(
       defaultValue: true,
       comment: "Наличие на складе",
     },
+    stock: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+      comment: "Количество товара на складе",
+    },
 
     // Технические характеристики
     door_type: { type: DataTypes.STRING(255), comment: "Тип двери: деревянная, металлическая и т.д." },

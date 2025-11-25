@@ -17,9 +17,13 @@ exports.register = async (req, res) => {
 
     res.status(201).json({
       token,
-      user: { id: user.id, name: user.name, email: user.email, phone: user.phone },
+      user: { id: user.id, name: user.name, email: user.email, phone: user.phone, role: user.role },
     });
   } catch (err) {
+    console.error(err);
+    if (err.name === "SequelizeValidationError" || err.name === "SequelizeUniqueConstraintError") {
+      return res.status(400).json({ message: err.errors.map(e => e.message).join(", ") });
+    }
     res.status(500).json({ message: "Ошибка сервера" });
   }
 };
@@ -36,9 +40,13 @@ exports.login = async (req, res) => {
 
     res.json({
       token,
-      user: { id: user.id, name: user.name, email: user.email, phone: user.phone },
+      user: { id: user.id, name: user.name, email: user.email, phone: user.phone, role: user.role },
     });
   } catch (err) {
+    console.error(err);
+    if (err.name === "SequelizeValidationError" || err.name === "SequelizeUniqueConstraintError") {
+      return res.status(400).json({ message: err.errors.map(e => e.message).join(", ") });
+    }
     res.status(500).json({ message: "Ошибка сервера" });
   }
 };

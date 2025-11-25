@@ -7,6 +7,7 @@ const OrderItem = require("./models/OrderItemModel");
 const Review = require("./models/ReviewModel");
 const Statistics = require("./models/StatisticsModel");
 const OurProject = require("./models/OurProjectModel");
+const bcrypt = require("bcrypt"); // Добавил bcrypt
 
 // Пул фото
 const imagePool = [
@@ -28,7 +29,7 @@ const withFourSameImages = () => {
   const img = getNextImage();
   return { 
     image_path: img, 
-    image_gallery: JSON.stringify([img, img, img, img])  // 4 штуки
+    image_gallery: [img, img, img, img]  // 4 штуки
   };
 };
 
@@ -765,79 +766,81 @@ async function seedDatabase() {
     // ───── 3. Пользователи (если их нет) ─────
     const usersExist = await User.count();
     if (usersExist === 0) {
+      const hashedPassword = await bcrypt.hash("123456", 10);
+      
       await User.bulkCreate([
         {
           name: "Иван Иванов",
           email: "ivan@example.com",
           phone: "+79001234567",
-          password: "hashedpass",
+          password: hashedPassword,
           role: "user",
         },
         {
           name: "Мария Петрова",
           email: "maria@example.com",
           phone: "+79001234568",
-          password: "hashedpass",
+          password: hashedPassword,
           role: "user",
         },
         {
           name: "Алексей Смирнов",
           email: "alex@example.com",
           phone: "+79001234569",
-          password: "hashedpass",
+          password: hashedPassword,
           role: "user",
         },
         {
           name: "Елена Кузнецова",
           email: "elena@example.com",
           phone: "+79001234570",
-          password: "hashedpass",
+          password: hashedPassword,
           role: "user",
         },
         {
           name: "Дмитрий Васильев",
           email: "dmitry@example.com",
           phone: "+79001234571",
-          password: "hashedpass",
+          password: hashedPassword,
           role: "user",
         },
         {
           name: "Ольга Морозова",
           email: "olga@example.com",
           phone: "+79001234572",
-          password: "hashedpass",
+          password: hashedPassword,
           role: "user",
         },
         {
           name: "Сергей Новиков",
           email: "sergey@example.com",
           phone: "+79001234573",
-          password: "hashedpass",
+          password: hashedPassword,
           role: "user",
         },
         {
           name: "Анна Лебедева",
           email: "anna@example.com",
           phone: "+79001234574",
-          password: "hashedpass",
+          password: hashedPassword,
           role: "user",
         },
         {
           name: "Павел Соколов",
           email: "pavel@example.com",
           phone: "+79001234575",
-          password: "hashedpass",
+          password: hashedPassword,
           role: "user",
         },
         {
           name: "Татьяна Федорова",
           email: "tanya@example.com",
           phone: "+79001234576",
-          password: "hashedpass",
+          password: hashedPassword,
           role: "user",
         },
       ]);
-      console.log("Пользователи добавлены");
+      console.log("Пользователи добавлены (пароль: 123456)");
     }
     // ───── 4. Заказы + OrderItem (надёжно, без дубликатов замков в заказе) ─────
     // ───── 4. Заказы + OrderItem (финальная версия под твою модель) ─────

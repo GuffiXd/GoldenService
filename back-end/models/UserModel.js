@@ -19,16 +19,23 @@ User.init(
       allowNull: false,
       comment: "ФИО пользователя",
       validate: {
-        len: [2, 100],
+        len: {
+          args: [2, 100],
+          msg: "Имя должно быть от 2 до 100 символов",
+        },
       },
     },
 
     email: {
       type: DataTypes.STRING(100),
       allowNull: false,
-      unique: true,
+      unique: {
+        msg: "Такой email уже зарегистрирован",
+      },
       validate: {
-        isEmail: { msg: "Некорректный email" },
+        isEmail: {
+          msg: "Введите корректный email адрес",
+        },
       },
       comment: "Email — используется для входа",
     },
@@ -38,7 +45,10 @@ User.init(
       allowNull: false,
       comment: "Телефон в формате +7XXXXXXXXXX",
       validate: {
-        is: /^\+?[0-9]{10,15}$/,
+        is: {
+          args: /^\+?[0-9]{10,15}$/,
+          msg: "Телефон должен содержать от 10 до 15 цифр (например, +79001234567)",
+        },
       },
     },
 

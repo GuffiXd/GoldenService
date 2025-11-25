@@ -46,7 +46,7 @@ const {
   User,
   Statistics,
   OurProject,
-  CallbackModel,
+  Callback,
   WholesaleOrder,
   Favorite, // Убедись, что файл Favorite.js существует в папке models!
   Address,
